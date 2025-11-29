@@ -5,8 +5,6 @@ $(() => {
       $(document).on('click','a.result_map',function(e){
             e.preventDefault();
 
-            // $('.dynamic_result_individual_xhr').remove();
-
             var trId =  $(this).closest('tr').attr('id');
 
             if ($('.tr_map_xhr').length)
@@ -14,7 +12,6 @@ $(() => {
                 if ($('.'+trId).length)
                 {
                     $(".tr_map_xhr").remove();
-
                     return;
                 }
                 else
@@ -23,51 +20,70 @@ $(() => {
                 }
             }
 
-
-            // $('[id^="dynamic_result_individual_"]').remove();
-
             var url = $(this).attr('href');
+
+            // Vytvoření řádku s mapou - použití unikátního ID pro každou mapu
+            var mapId = 'm_' + trId;
+            var mapHeight = $(window).width() < 640 ? '200px' : '400px';
+            var colspan = $(window).width() < 640 ? '6' : '9';
+            var closeButtonStyle = $(window).width() < 640
+                ? 'left:5px;top:5px'
+                : 'right:100px;top:17px';
+
+            var novyRadek = $('<tr class="tr_map_xhr '+ trId +'" style="position:relative"><td class="text-center" colspan="' + colspan + '"><div id="close_map" style="padding:2px 10px;border:2px solid black;background:white;position:absolute;' + closeButtonStyle + ';z-index:1000;cursor:pointer">Zavřít mapu</div><div id="' + mapId + '" style="height:' + mapHeight + '"></div></td></tr>');
+
+            if($(window).width() < 640) {
+                $("#result_table_sm #"+trId).after(novyRadek);
+            } else {
+                $("#result_table #"+trId).after(novyRadek);
+            }
+
+            // Načtení dat a vytvoření mapy
             $.getJSON(url, function(response) {
-                  var gpxx = zacatek;
-                  gpxx += response;
-                  gpxx += konec;
-                  var value = gpxx.trim();
+                // Parsování GPX dat z odpovědi
+                var gpxData = zacatek + response + konec;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(gpxData, "text/xml");
 
+                // Získání GPS bodů
+                var trackPoints = xmlDoc.getElementsByTagName('trkpt');
+                var coordinates = [];
 
-                  var m = new SMap(JAK.gel("m"));
-                  var xmlDoc = JAK.XML.createDocument(value);
+                for (var i = 0; i < trackPoints.length; i++) {
+                    var lat = parseFloat(trackPoints[i].getAttribute('lat'));
+                    var lon = parseFloat(trackPoints[i].getAttribute('lon'));
+                    coordinates.push([lat, lon]);
+                }
 
-                  var gpx = new SMap.Layer.GPX(xmlDoc, null, {maxPoints:500}); /* GPX vrstva */
-                  m.addDefaultLayer(SMap.DEF_BASE).enable();
-                  m.addLayer(gpx); /* Přidáme ji do mapy */
-                  m.addDefaultControls();
-                  gpx.enable();    /* Zapnout vrstvu */
-                  gpx.fit();
-              }).fail(function(xhr) {
-                  // Zpracování chyb
-                  console.error(xhr);
-              });
+                if (coordinates.length > 0) {
+                    // Vytvoření Leaflet mapy s unikátním ID
+                    var map = L.map(mapId).setView(coordinates[0], 13);
 
+                    // Přidání OpenStreetMap tile layer
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 19
+                    }).addTo(map);
 
+                    // Vytvoření polyline z GPS bodů
+                    var polyline = L.polyline(coordinates, {
+                        color: 'red',
+                        weight: 3,
+                        opacity: 0.7
+                    }).addTo(map);
 
+                    // Automatické přizpůsobení pohledu na trasu
+                    map.fitBounds(polyline.getBounds());
 
-
-           if($(window).width() < 640)
-           {
-            //var novyRadek = $('<tr class="tr_map_xhr"><td class="text-center" colspan="5"><div id="m" style="height:300px"></div></td></tr>'); // Vytvoření nového řádku
-            var novyRadek = $('<tr class="tr_map_xhr '+ trId +'" style="position:relative"><td class="text-center" colspan="6"><div id="close_map" style="padding:2px 10px;border:2px solid black;background:white;position:absolute;left:5px;top:5px;z-index:1000;cursor:pointer">Zavřít mapu</div><div id="m" style="height:200px"></div></td></tr>'); // Vytvoření nového řádku
-
-            $("#result_table_sm #"+trId).after(novyRadek);
-
-           }
-           else
-           {
-            var novyRadek = $('<tr class="tr_map_xhr '+ trId +'" style="position:relative"><td class="text-center" colspan="9"><div id="close_map" style="padding:2px 10px;border:2px solid black;background:white;position:absolute;right:100px;top:17px;z-index:1000;cursor:pointer">Zavřít mapu</div><div id="m" style="height:400px"></div></td></tr>'); // Vytvoření nového řádku
-            $("#result_table #"+trId).after(novyRadek);
-
-           }
-
-
+                    // Přidání markerů na začátek a konec
+                    L.marker(coordinates[0]).addTo(map)
+                        .bindPopup('Start');
+                    L.marker(coordinates[coordinates.length - 1]).addTo(map)
+                        .bindPopup('Cíl');
+                }
+            }).fail(function(xhr) {
+                console.error('Chyba při načítání dat mapy:', xhr);
+            });
       });
 
 
@@ -101,7 +117,6 @@ var konec = '</trkseg></trk></gpx>';
 
 
 $(document).on('click', 'a[href*="/event/result/"]', function(e) {
-
 
     e.preventDefault(); // Zabraňte výchozímu chování
 
@@ -154,13 +169,9 @@ $(document).on('click', 'a[href*="/event/result/"]', function(e) {
 
 
 
-    $.getJSON($(this).attr('href'), function(response_array) {
-
-        var response = response_array.results;
+    $.getJSON($(this).attr('href'), function(response) {
 
         var str = "";
-
-        var event_type = response_array.event_type;
 
         for (var key in response) {
 
@@ -170,75 +181,37 @@ $(document).on('click', 'a[href*="/event/result/"]', function(e) {
 
                 str += '<tr id="dynamic_result_individual_'+ key +'" class="dynamic_result_individual_xhr user_'+ userId  +' bg-red-100 text-blue-700">';
 
-
-                if(event_type == 1)
+                if($(window).width() < 640)
                 {
-                    if($(window).width() < 640)
-                        {
-                            str += '<td class="border" colspan="2"></td>';
+                    str += '<td class="border" colspan="2"></td>';
+                    
+                    str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
 
-                            str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
+                    str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
 
-                            str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
+                    str += '<td class="border text-center">'+response[key].finish_time+'</td>';
 
-                            str += '<td class="border text-center">'+response[key].finish_time+'</td>';
+                    str += '<td class="border text-center">'+response[key].pace_km+'</td>';
+    
+                }
+                else
+                {
+                    str += '<td class="border" colspan="4"></td>';
+                    
+                    str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
 
-                            str += '<td class="border text-center">'+response[key].pace+'</td>';
+                    str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
 
-                        }
-                        else
-                        {
-                            str += '<td class="border" colspan="4"></td>';
-
-                            str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
-
-                            str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
-
-                            str += '<td class="border text-center">'+response[key].pace+'</td>';
-
-                            str += '<td class="border text-center">'+response[key].finish_time+'</td>';
-
-                            str += '<td class="border text-center"></td>';
-                        }
-
+                    str += '<td class="border text-center">'+response[key].pace_km+'</td>';
+    
+                    str += '<td class="border text-center">'+response[key].finish_time+'</td>';
+    
+                    str += '<td class="border text-center"></td>';
                 }
 
-                else if(event_type == 2)
-                {
-                    if($(window).width() < 640)
-                        {
-                            str += '<td class="border" colspan="2"></td>';
+               
 
-                            str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
-
-                            str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
-
-                            str += '<td class="border text-center">'+response[key].pace+'</td>';
-
-                            str += '<td class="border text-center">'+response[key].finish_distance_km+'</td>';
-
-                        }
-                        else
-                        {
-                            str += '<td class="border" colspan="3"></td>';
-
-                            str += '<td class="border px-2 text-center">'+response[key].date+'</td>'
-
-                            str += '<td class="border text-center"><a class="result_map result_map_xhr flex justify-center" href="/result/'+ response[key].id +'/map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="blue" class="w-6 h-6"><path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" /></svg></a></td>';
-
-                            str += '<td class="border text-center">'+response[key].pace+'</td>';
-
-                            str += '<td class="border text-center">'+response[key].finish_distance_km+'</td>';
-
-                            str += '<td class="border text-center"></td>';
-                        }
-
-                }
-
-
-
-
-
+            
 
                 str += '</tr>';
 
