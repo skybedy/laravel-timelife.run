@@ -118,9 +118,6 @@ class RegistrationController extends Controller
                 'transfer_data' => ['destination' => $payment_recepient->stripe_client_id],
                 'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
                 'statement_descriptor' => 'TIMELIFE',
-                'metadata' => [
-                    'payment_reference_id' => $payment_reference_id,
-                ],
             ],
         ]);
 
@@ -160,9 +157,6 @@ class RegistrationController extends Controller
                     'transfer_data' => ['destination' => env('STRIPE_CONNECT_CLIENT_ID')],
                     'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
                     'statement_descriptor' => 'TIMELIFE',
-                    'metadata' => [
-                        'payment_reference_id' => $payment_reference_id,
-                    ],
                 ],
             ]);
 
@@ -256,9 +250,6 @@ class RegistrationController extends Controller
                 'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
                 'setup_future_usage' => 'on_session',
                 'statement_descriptor' => 'TIMELIFE',
-                'metadata' => [
-                    'payment_reference_id' => $payment_reference_id,
-                ],
             ],
         ]);
 
