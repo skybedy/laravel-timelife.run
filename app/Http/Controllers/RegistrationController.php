@@ -91,19 +91,12 @@ class RegistrationController extends Controller
 
     public function checkoutDifferentPaymentRecipient(Request $request,StripeClient $stripe,PaymentRecepient $paymentRecepient)
     {
-
-
-
-        //return $this->checkout($request,$stripe);
-
-
-
         $payment_recepient = $paymentRecepient->find($request->payment_recipient);
 
+        $price = $stripe->prices->retrieve($payment_recepient->stripe_price_id);
 
-
-
-        $price =  $stripe->prices->retrieve($payment_recepient->stripe_price_id);
+        // Generovat unikátní payment reference ID PŘED Stripe
+        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
 
         // Vytvoření Stripe Checkout Session
         $checkout_session = $stripe->checkout->sessions->create([
@@ -118,12 +111,16 @@ class RegistrationController extends Controller
                 'amount' => $price->unit_amount, // Cena v v halerich
                 'event_id' => $request->event_id,
                 'payment_recipient_id' => $request->payment_recipient,
+                'payment_reference_id' => $payment_reference_id,
             ],
 
             'payment_intent_data' => [
                 'transfer_data' => ['destination' => $payment_recepient->stripe_client_id],
                 'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
-                'statement_descriptor' => 'VIRTUAL-CHARITY-RUN',
+                'statement_descriptor' => 'TIMELIFE',
+                'metadata' => [
+                    'payment_reference_id' => $payment_reference_id,
+                ],
             ],
         ]);
 
@@ -137,17 +134,14 @@ class RegistrationController extends Controller
 
         public function checkout(Request $request,StripeClient $stripe)
         {
+            $price = $stripe->prices->retrieve(env('STRIPE_PRICE_ID'));
 
-
-            $price =  $stripe->prices->retrieve(env('STRIPE_PRICE_ID'));
-
-
-
+            // Generovat unikátní payment reference ID PŘED Stripe
+            $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
 
             // Vytvoření Stripe Checkout Session
             $checkout_session = $stripe->checkout->sessions->create([
                 'line_items' => [[
-                    //'price' => 'price_1Ps1uS2LSxhftJEav9dO6DNQ', // testovací Price ID
                     'price' => env('STRIPE_PRICE_ID'), // Production Price ID
                     'quantity' => 1,
                 ]],
@@ -159,13 +153,16 @@ class RegistrationController extends Controller
                     'amount' => $price->unit_amount, // Cena v v halerich
                     'event_id' => $request->event_id,
                     'payment_recipient_id' => $request->payment_recipient,
+                    'payment_reference_id' => $payment_reference_id,
                 ],
 
                 'payment_intent_data' => [
                     'transfer_data' => ['destination' => env('STRIPE_CONNECT_CLIENT_ID')],
                     'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
-                    'statement_descriptor' => 'CHARITY RUN',
-
+                    'statement_descriptor' => 'TIMELIFE',
+                    'metadata' => [
+                        'payment_reference_id' => $payment_reference_id,
+                    ],
                 ],
             ]);
 
@@ -174,39 +171,99 @@ class RegistrationController extends Controller
 
             }
 
-    public function success(Request $request,StripeClient $stripe)
+    public function success(Request $request, StripeClient $stripe)
     {
-
-        $session_id = $session_id = $request->get('session_id');
+        $session_id = $request->get('session_id');
 
         $checkout_session = $stripe->checkout->sessions->retrieve($session_id);
 
-        $this->createPayment($request, $checkout_session, $stripe);
+        $this->createPayment($checkout_session);
 
-        return redirect()->route('registration.store', ['eventId' => $checkout_session->metadata->event_id]);
-
+        // Vždy redirect na homepage s poděkováním (žádná registrace)
+        return redirect()->route('index')->with('success', 'Děkujeme za váš příspěvek!');
     }
 
 
 
-    private function createPayment($request, $checkout_session, $stripe)
+    private function createPayment($checkout_session)
     {
-        if (!Payment::where('stripe_session_id', $checkout_session->id)->exists()) {
-                $payment = new Payment();
-                $payment->user_id = $request->user()->id;
-                $payment->event_id = $checkout_session->metadata->event_id; // pokud si uložíš metadata při vytvoření session
-                $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
-                $payment->amount = $checkout_session->metadata->amount / 100; // Cena v korunách
-                $payment->stripe_session_id = $checkout_session->id;
-                $payment->created_at = now();
-                $payment->updated_at = now();
-                $payment->save();
+        // Prevence duplicitních plateb
+        if (Payment::where('stripe_session_id', $checkout_session->id)->exists()) {
+            return;
         }
+
+        $payment = new Payment();
+
+        // Všichni jsou anonymní dárci (žádná registrace)
+        $payment->user_id = null;
+        $payment->donor_email = $checkout_session->customer_details->email ?? null;
+        $payment->donor_name = $checkout_session->customer_details->name ?? null;
+
+        // Společná data
+        $payment->event_id = $checkout_session->metadata->event_id;
+        $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
+        $payment->amount = $checkout_session->metadata->amount / 100;
+        $payment->stripe_session_id = $checkout_session->id;
+        $payment->payment_reference_id = $checkout_session->metadata->payment_reference_id ?? null;
+
+        $payment->save();
     }
 
     public function cancel()
     {
         return redirect()->route('index')->with('error', 'Platba byla zrušena');
+    }
+
+    public function checkoutDynamic(Request $request, StripeClient $stripe)
+    {
+        // Validace
+        $request->validate([
+            'amount' => 'required|numeric|min:10|max:1000000',
+            'event_id' => 'required|integer',
+            'payment_recipient' => 'required|integer',
+        ]);
+
+        $payment_recipient = PaymentRecepient::findOrFail($request->payment_recipient);
+
+        // Generovat unikátní payment reference ID PŘED Stripe
+        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
+
+        // Vytvoření Stripe Checkout Session s dynamickou cenou
+        $checkout_session = $stripe->checkout->sessions->create([
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'czk',
+                    'unit_amount' => $request->amount * 100, // částka v haléřích
+                    'product_data' => [
+                        'name' => 'Příspěvek - 100 půlmaratonů pro Jitku',
+                        'description' => 'Dobrovolný příspěvek na podporu',
+                        // Placeholder pro testování - na produkci změnit na: asset('images/dum-pro-julii.png')
+                        'images' => ['https://via.placeholder.com/512x512.png?text=Logo'],
+                    ],
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => route('payment.success').'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('payment.cancel'),
+            'metadata' => [
+                'amount' => $request->amount * 100, // Cena v haléřích
+                'event_id' => $request->event_id,
+                'payment_recipient_id' => $request->payment_recipient,
+                'payment_reference_id' => $payment_reference_id,
+            ],
+            'payment_intent_data' => [
+                'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
+                'setup_future_usage' => 'on_session',
+                'statement_descriptor' => 'TIMELIFE',
+                'metadata' => [
+                    'payment_reference_id' => $payment_reference_id,
+                ],
+            ],
+        ]);
+
+        // Přesměrování na Stripe Checkout
+        return redirect($checkout_session->url);
     }
 
 

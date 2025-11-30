@@ -31,6 +31,12 @@ Route::post('/webhook', [StravaController::class, 'webhookPostStrava'])->name('p
 Route::get('/webhook/autoupload', [StravaController::class, 'autouploadStrava'])->name('autoupload_strava');
 Route::get('/privacy-policy', [PrivacyController::class, 'privacyPolicy'])->name('privacy_policy');
 Route::get('/user-data-deletion', [PrivacyController::class, 'userDataDeletion'])->name('user_data_deletion');
+Route::get('/registration/create/checkout/stripe/{event_id}/{payment_recipient}', [RegistrationController::class, 'checkoutDifferentPaymentRecipient'])->name('registration.checkout.stripe.payment_recipient');
+
+//tyhle 3 routy byly presunuty mimo povinnost autentifikace, protoze u projektu to nema vyznam
+Route::post('/registration/create/checkout/dynamic', [RegistrationController::class, 'checkoutDynamic'])->name('registration.checkout.dynamic');
+Route::get('/registration/create/checkout/success', [RegistrationController::class, 'success'])->name('payment.success');
+Route::get('/registration/create/checkout/cancel', [RegistrationController::class, 'cancel'])->name('payment.cancel');
 
 
 Route::middleware(['auth','checkUserSerieRegistered'])->group(function () {
@@ -74,13 +80,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/registration/create/checkout/success', [RegistrationController::class, 'success'])->name('payment.success');
-    Route::get('/registration/create/checkout/cancel', [RegistrationController::class, 'cancel'])->name('payment.cancel');
+ 
     Route::get('/registration/create/checkout/{eventId}', [RegistrationController::class, 'checkout'])->name('registration.checkout');
     Route::get('/registration/create/{eventId}', [RegistrationController::class, 'create'])->name('registration.create');
     Route::get('/registration/store/{eventId}', [RegistrationController::class, 'store'])->name('registration.store');
     //mozna pozdeji prozkoumat moznost volitelneho argumentu a nasledneho volani metody podle toho, nevom ted, co je cistejsi
-    Route::get('/registration/create/checkout/stripe/{event_id}/{payment_recipient}', [RegistrationController::class, 'checkoutDifferentPaymentRecipient'])->name('registration.checkout.stripe.payment_recipient');
     Route::get('/registration/create/checkout/znesnaze/stripe/{event_id}', [RegistrationController::class, 'checkout'])->name('registration.checkout.znesnaze.stripe');
 
 

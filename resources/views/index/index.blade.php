@@ -106,14 +106,36 @@
                                     </div>
 
 
-                                    <!-- Stripe platba -->
-                                    <div class="flex items-center gap-3 bg-transparent border-2 border-white rounded-xl px-4 py-3 hover:bg-white hover:bg-opacity-10 transition-all duration-300 cursor-pointer group">
-                                        <svg class="w-6 h-6 text-white flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                                        </svg>
-                                        <div class="text-lg sm:text-xl md:text-2xl text-white">
-                                            <span class="font-bold">Podpořit:</span> <a class="" href="{{ route('registration.checkout.stripe.payment_recipient',['event_id' => 10,'payment_recipient' => 3]) }}">Platba</a>
-                                        </div>
+                                    <!-- Stripe platba s dynamickou částkou -->
+                                    <div class="col-span-1 md:col-span-2 lg:col-span-3 bg-transparent border-2 border-white rounded-xl px-4 py-3">
+                                        <form action="{{ route('registration.checkout.dynamic') }}" method="POST" class="flex flex-col md:flex-row items-center gap-3">
+                                            @csrf
+                                            <input type="hidden" name="event_id" value="10">
+                                            <input type="hidden" name="payment_recipient" value="3">
+
+                                            <svg class="w-6 h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                            </svg>
+
+                                            <label class="text-lg sm:text-xl md:text-2xl text-white font-bold">Podpořit:</label>
+
+                                            <input
+                                                type="number"
+                                                name="amount"
+                                                min="10"
+                                                step="1"
+                                                placeholder="Částka v Kč"
+                                                required
+                                                class="px-4 py-2 rounded-lg text-gray-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-white"
+                                            >
+
+                                            <button
+                                                type="submit"
+                                                class="px-6 py-2 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-colors text-lg"
+                                            >
+                                                Zaplatit
+                                            </button>
+                                        </form>
                                     </div>
 
                                 </div>
