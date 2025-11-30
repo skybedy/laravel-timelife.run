@@ -42,23 +42,23 @@ class Payment extends Model
     }
 
     /**
-     * Accessor - získat email dárce (z users nebo donor_email)
+     * Získat email dárce (z users nebo donor_email)
      */
-    public function getDonorEmailAttribute($value)
+    public function getEffectiveDonorEmail()
     {
         return $this->user_id
             ? $this->user->email
-            : $value;
+            : $this->donor_email;
     }
 
     /**
-     * Accessor - získat jméno dárce
+     * Získat jméno dárce
      */
-    public function getDonorNameAttribute($value)
+    public function getEffectiveDonorName()
     {
         return $this->user_id
             ? $this->user->firstname . ' ' . $this->user->lastname
-            : $value;
+            : $this->donor_name;
     }
 
     /**
