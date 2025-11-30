@@ -95,9 +95,6 @@ class RegistrationController extends Controller
 
         $price = $stripe->prices->retrieve($payment_recepient->stripe_price_id);
 
-        // Generovat unikátní payment reference ID PŘED Stripe
-        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
-
         // Vytvoření Stripe Checkout Session
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => [[
@@ -111,7 +108,6 @@ class RegistrationController extends Controller
                 'amount' => $price->unit_amount, // Cena v v halerich
                 'event_id' => $request->event_id,
                 'payment_recipient_id' => $request->payment_recipient,
-                'payment_reference_id' => $payment_reference_id,
             ],
 
             'payment_intent_data' => [
@@ -133,9 +129,6 @@ class RegistrationController extends Controller
         {
             $price = $stripe->prices->retrieve(env('STRIPE_PRICE_ID'));
 
-            // Generovat unikátní payment reference ID PŘED Stripe
-            $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
-
             // Vytvoření Stripe Checkout Session
             $checkout_session = $stripe->checkout->sessions->create([
                 'line_items' => [[
@@ -150,7 +143,6 @@ class RegistrationController extends Controller
                     'amount' => $price->unit_amount, // Cena v v halerich
                     'event_id' => $request->event_id,
                     'payment_recipient_id' => $request->payment_recipient,
-                    'payment_reference_id' => $payment_reference_id,
                 ],
 
                 'payment_intent_data' => [
@@ -219,9 +211,6 @@ class RegistrationController extends Controller
 
         $payment_recipient = PaymentRecepient::findOrFail($request->payment_recipient);
 
-        // Generovat unikátní payment reference ID PŘED Stripe
-        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
-
         // Vytvoření Stripe Checkout Session s dynamickou cenou
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => [[
@@ -244,7 +233,6 @@ class RegistrationController extends Controller
                 'amount' => $request->amount * 100, // Cena v haléřích
                 'event_id' => $request->event_id,
                 'payment_recipient_id' => $request->payment_recipient,
-                'payment_reference_id' => $payment_reference_id,
             ],
             'payment_intent_data' => [
                 'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
