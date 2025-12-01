@@ -10,6 +10,7 @@ use Stripe\Checkout\Session;
 use Stripe\Stripe;
 use App\Models\PaymentRecepient;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 
 class RegistrationController extends Controller
 {
@@ -178,6 +179,12 @@ class RegistrationController extends Controller
             return;
         }
 
+        // DEBUG: Vypsat celý checkout_session do logu
+        Log::info('Stripe checkout_session:', [
+            'customer_details' => $checkout_session->customer_details ?? 'NULL',
+            'full_session' => $checkout_session->toArray(),
+        ]);
+
         $payment = new Payment();
 
         // Všichni jsou anonymní dárci (žádná registrace)
@@ -211,6 +218,9 @@ class RegistrationController extends Controller
 
         $payment_recipient = PaymentRecepient::findOrFail($request->payment_recipient);
 
+        // Generovat unikátní payment reference
+        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
+
         // Vytvoření Stripe Checkout Session s dynamickou cenou
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => [[
@@ -233,6 +243,7 @@ class RegistrationController extends Controller
                 'amount' => $request->amount * 100, // Cena v haléřích
                 'event_id' => $request->event_id,
                 'payment_recipient_id' => $request->payment_recipient,
+                'payment_reference_id' => $payment_reference_id,
             ],
             'payment_intent_data' => [
                 'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
