@@ -20,14 +20,17 @@ class Event extends Model
         return $this->hasMany(Registration::class, 'event_id');
     }
 
+ 
     public function eventList($userId)
     {
-        return self::select('events.id','events.serie_id', 'events.name', 'events.date_start', 'events.date_end', 'events.second_name')
+        
+        return self::select('events.id', 'events.name', 'events.date_start', 'events.date_end', 'events.second_name')
             ->leftJoin('registrations', function ($join) use ($userId) {
                 $join->on('events.id', '=', 'registrations.event_id')
                     ->where('registrations.user_id', '=', $userId);
             })
-            ->where(['events.platform_id' =>  env('PLATFORM_ID'),'display' => true])
+            ->where('events.platform_id', '=', env('PLATFORM'))
+            ->where('events.display', '=', 1)
             ->selectRaw('CASE WHEN registrations.user_id IS NULL THEN null ELSE 1 END as registration_status')
             ->orderBy('events.id', 'asc')
             ->get();
