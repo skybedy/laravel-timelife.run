@@ -11,13 +11,13 @@
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-80"  width="70px" height="70px" />
                     </a>
                     <div class="pt-1">
-                        <div class="indie-flower-regular text-3xl sm:text-4xl">Virtual Charity Run</div>
+                        <div class="indie-flower-regular text-3xl sm:text-4xl">LifeRun</div>
                     </div>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-6 lg:space-x-8 sm:-my-px sm:ms-10 md:flex bg-red-70">
-                    <x-nav-link :href="route('index')" :active="request()->routeIs('index')" class="text-lg lg:text-xl text-gray-600">
+                    <x-nav-link :href="route('index')" :active="request()->routeIs('index')" class="hidden text-lg lg:text-xl text-gray-600">
                         {{ __('Hlavní strana') }}
                     </x-nav-link>
 
@@ -27,17 +27,17 @@
                     </x-nav-link>
                 -->
 
-                    <x-nav-link :href="route('how_it_works.index')" :active="request()->routeIs('how_it_works.index')" class="text-lg lg:text-xl text-gray-600">
+                    <x-nav-link :href="route('how_it_works.index')" :active="request()->routeIs('how_it_works.index')" class="hidden text-lg lg:text-xl text-gray-600">
                         {{ __('Jak na to') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('about.index')" :active="request()->routeIs('about.index')" class="text-lg lg:text-xl text-gray-600">
+                    <x-nav-link :href="route('about.index')" :active="request()->routeIs('about.index')" class="hidden text-lg lg:text-xl text-gray-600">
                         {{ __('O platformě') }}
                     </x-nav-link>
                 </div>
 
             <!-- Settings Dropdown -->
-            <div class="hidden md:flex sm:items-center sm:ms-6">
+            <div class="hidden">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         @auth
@@ -74,7 +74,7 @@
             </div>
 
             <!-- Hamburger -->
-            <div class="flex items-center md:hidden">
+            <div class="hidden flex items-center md:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center  rounded-md text-white hover:white hover:bg-gray-800 focus:outline-none focus:bg-gray-800 focus:text-white transition duration-150 ease-in-out bg-gray-800 mr-1">
                     <svg class="h-10 w-8" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -88,20 +88,20 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
 
-        <div class="pt-2 pb-3 space-y-1">
+        <div class="hidden pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('index')" :active="request()->routeIs('index')">
                 {{ __('Hlavní strana') }}
             </x-responsive-nav-link>
         </div>
 
-        <div class="pt-2 pb-3 space-y-1">
+        <div class="hidden pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('how_it_works.index')" :active="request()->routeIs('how_it_works.index')">
                 {{ __('Jak na to') }}
             </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
+        <div class="hidden pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
               @auth
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->firstname }} {{ Auth::user()->lastname }}</div>
