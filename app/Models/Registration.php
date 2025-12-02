@@ -151,4 +151,33 @@ class Registration extends Model
 
 
 
+    function generateReferenceNumber(): int
+{
+    $year = date('Y'); // 2025
+
+    return DB::transaction(function () use ($year) {
+        // 1) Zamkneme a najdeme největší reference_number pro aktuální rok
+        $row = DB::selectOne("
+            SELECT reference_number 
+            FROM payments 
+            WHERE reference_number >= ? AND reference_number < ?
+            ORDER BY reference_number DESC 
+            LIMIT 1 
+            FOR UPDATE
+        ", [$year.'000000', $year.'999999']);
+
+        if ($row) {
+            $next = $row->reference_number + 1;
+        } else {
+            // První platba v roce
+            $next = (int)($year . '000001');
+        }
+
+        return $next;
+        // → 2025000001, 2025000002, …
+    });
+}
+
+
+
 }
