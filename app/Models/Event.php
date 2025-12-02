@@ -20,7 +20,6 @@ class Event extends Model
         return $this->hasMany(Registration::class, 'event_id');
     }
 
- 
     public function eventList($userId)
     {
         
@@ -36,27 +35,19 @@ class Event extends Model
             ->get();
     }
 
-    /**
-     * Get all events from the same series only
-     *
-     * @param $eventId
-     * @return mixed
-     */
-    public function allSameSeriesEvents($eventId)
+    public function eventShow()
     {
 
-        return self::where('id', '!=', $eventId)
-            ->where('platform_id', env('PLATFORM_ID'))
-            ->where('display',1)
-            ->where('serie_id', function ($query) use($eventId) {
-                $query->select('serie_id')
-                    ->from('events')
-                    ->where('id', $eventId)
-                    ->limit(1);
-            })
-            ->select("id","name")
-            ->get();
+        $eventId = 1;
+        $userId = 1;
+
+        $event = Event::with(['registrations' => function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        }])
+            ->where('id', $eventId)
+            ->first();
+
+        return $event;
+
     }
-
-
 }
