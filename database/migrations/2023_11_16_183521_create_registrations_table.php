@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('registrations', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('id')->nullable();
+            $table->unsignedBigInteger('event_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedInteger('ids')->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->timestamps();
         });
     }

@@ -12,15 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('results', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('registration_id')->constrained();
+            $table->unsignedBigInteger('id')->nullable();
+            $table->unsignedBigInteger('registration_id')->nullable();
             $table->date('finish_time_date');
-            // $table->string('place');
             $table->unsignedMediumInteger('finish_time_order')->nullable();
-            $table->time('finish_time');
-            $table->string('pace');
-            $table->unsignedInteger('finish_time_sec');
-            //  $table->json('duplicity_check')->nullable();
+            $table->time('finish_time')->nullable();
+            $table->unsignedInteger('finish_time_sec')->nullable();
+            $table->double('finish_distance_km')->nullable();
+            $table->double('finish_distance_mile')->nullable();
+            $table->string('pace_km')->nullable();
+            $table->string('pace_mile')->nullable();
             $table->timestamps();
         });
     }
