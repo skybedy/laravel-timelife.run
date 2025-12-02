@@ -10,6 +10,10 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Webhook routes - BEZ middleware
+            require __DIR__.'/../routes/webhooks.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Global HTTP middleware
@@ -20,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
             \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
             \App\Http\Middleware\TrimStrings::class,
-            \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+            \App\Http\Middleware\ConvertEmptyStringsToNull::class,
         ]);
 
         // Web middleware group

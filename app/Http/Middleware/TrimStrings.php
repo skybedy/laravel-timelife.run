@@ -16,4 +16,16 @@ class TrimStrings extends Middleware
         'password',
         'password_confirmation',
     ];
+
+    /**
+     * Skip trimming for webhook routes
+     */
+    public function handle($request, $next)
+    {
+        if ($request->is('webhook/*') || $request->is('webhook')) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
+    }
 }
