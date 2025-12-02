@@ -14,7 +14,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use App\Exceptions\DuplicityException;
 use App\Exceptions\DuplicityTimeException;
-use App\Exceptions\StravaPrivateException;
 use App\Models\TrackPoint;
 use App\Models\Registration;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +39,7 @@ class ResultService
     private $dateEventEndTimestamp;
     private $duplicityCheck;
 
-    public function getStreamFromStrava($request,$activityId = null): array
+    public function getStreamFromStrava($request,$activityId = null)
     {
         if($activityId == null)
         {
@@ -63,8 +62,6 @@ class ResultService
         {
             throw new NoStravaAuthorizeException();
         };
-
-        //dd($user->strava_expires_at);
 
         if ($user->strava_expires_at > time())
         {
@@ -125,8 +122,6 @@ class ResultService
     {
         $request = $args['request'];
 
-        $registrationId = $args['registration_id'];
-
         $userId = $request->user()->id;
 
         $event = Event::where('id', $request->eventId);
@@ -173,7 +168,7 @@ class ResultService
             //kontrola, jestli je cas v rozsahu zavodu
             if (!$this->isTimeInRange($time, $dateEventStartTimestamp, $dateEventEndTimestamp))
             {
-                throw new TimeIsOutOfRangeException('Aktivita je mimo rozsah akce.');
+                throw new TimeIsOutOfRangeException('Čas je mimo rozsah akce.');
             }
             // zacatek startu aktivity, teoreticky by se měl shodovat s case v metadatech, ale pro jistotu
             if ($i == 1)
@@ -208,7 +203,6 @@ class ResultService
                 'time' => $time,
                 'user_id' => $userId,
                 'cadence' => (string) $cad,
-                'registration_id' => $registrationId
             ];
             //pokud je to prvni, nebo prazdny bod, tak se nic nepocita
 
@@ -287,7 +281,6 @@ class ResultService
                     //dd( $registration_id );
 
                     $trackPoints = [];
-
                     $coordinates = Polyline::decode($activityData['map']['summary_polyline']);
                     // dd($coordinates);
                     foreach ($coordinates as $coordinate) {
@@ -355,15 +348,9 @@ class ResultService
 
         $userId = $request->user()->id;
 
-        $registrationId = $args['registrationId'];
-
         $event = Event::where('id', $request->eventId);
 
         $eventDistance = $event->value('distance');
-
-        $eventType = $event->value('event_type_id');
-
-        $timeDistance = $event->value('time');
 
         $dateEventStartTimestamp = Carbon::createFromFormat('Y-m-d', $event->value('date_start'))->timestamp;
 
@@ -371,21 +358,9 @@ class ResultService
 
         $activityData = $args['activity_data'];
 
-       // tohle usetruje situaci, kdy stream ze Stravy neobsahuje vsechny potrebne informace (v tomto pripade cas startu aktivity)
-       // k čemuž docházů třeba v pripade, ze aktivita je soukromá, nebo se někdo pokousi nahrat aktivitu nekoho jineho, apod.
-        if(!isset($activityData['start_date_local']))
-        {
-            throw new StravaPrivateException();
-        }
-
         $startDayTimestamp = strtotime($activityData['start_date_local']);
-
         //datum aktivity pro dotaz do DB
         $activityDate = date("Y-m-d", $startDayTimestamp);
-
-
-
-
         //vytvoreni noveho pole se stejnymi paramatry jak GPX soubor
         $activityDataArray = [];
 
@@ -398,7 +373,6 @@ class ResultService
                     'distance' => $activityData['distance']['data'][$key],
                     'altitude' => $activityData['altitude']['data'][$key],
                     'cadence' => $activityData['cadence']['data'][$key],
-                    'seconds' => $activityData['time']['data'][$key],
                 ];
 
         }
@@ -407,231 +381,74 @@ class ResultService
 
         $lastPointLat = $lastPointLon = $currentPointLat = $currentPointLon = $distance = null;
 
+        foreach($activityDataArray as $point)
+        {
 
-        //zavody na cas
-        if($eventType == 2)
-        {
-             return $this->getActivityFinishDataFromStravaStreamTimeType($userId,$activityDataArray,$dateEventStartTimestamp,$dateEventEndTimestamp,$currentPointLat,$currentPointLon,$distance,$timeDistance,$activityDate,$registrationId);
-        }
-        // zavody na vzdalenost
-        else
-        {
-            foreach($activityDataArray as $activityData)
+
+            if (!$this->isTimeInRange($point['time'], $dateEventStartTimestamp, $dateEventEndTimestamp))
             {
-
-                if (!$this->isTimeInRange($activityData['time'], $dateEventStartTimestamp, $dateEventEndTimestamp))
-                {
-                    throw new TimeIsOutOfRangeException('Čas je mimo rozsah akce.');
-                }
-
-                $lastPointLat = $currentPointLat;
-
-                $lastPointLon = $currentPointLon;
-
-                $currentPointLat = floatval($activityData['latlng'][0]);
-
-                $currentPointLon = floatval($activityData['latlng'][1]);
-
-                //dump($lastPointLat);
-
-                $trackPointArray[] = [
-                    'latitude' => $currentPointLat,
-                    'longitude' => $currentPointLon,
-                    'time' => $activityData['time'],
-                    'user_id' => $userId,
-                    'cadence' => $activityData['cadence'],
-                    'registration_id' => $registrationId
-                ];
-
-
-                if ($lastPointLat != null) {
-
-                    $pointDistance = round($this->haversineGreatCircleDistance($lastPointLat, $lastPointLon, $currentPointLat, $currentPointLon), 1);
-
-                    $distance += $pointDistance;
-
-
-                    if ($distance >= $eventDistance)
-                    {
-                        $finishTime = $this->finishTimeCalculation($eventDistance,$activityData['distance'],$activityData['time'],$startDayTimestamp);
-
-                        return [
-                            'finish_time' => $finishTime['finish_time'],
-                            'finish_time_sec' => $finishTime['finish_time_sec'],
-                            'pace' => $finishTime['pace'],
-                            'track_points' => $trackPointArray,
-                          //  'registration_id' => $registrationId,
-                            'finish_time_date' => $activityDate,
-                        ];
-                    }
-                }
-            }
-
-            throw new SmallDistanceException('Vzdálenost je menší než délka tratě.');
-
-        }
-
-    }
-
-
-
-    private function getActivityFinishDataFromStravaStreamTimeType($userId,$activityDataArray,$dateEventStartTimestamp,$dateEventEndTimestamp, $currentPointLat, $currentPointLon,$distance,$timeDistance,$activityDate,$registrationId)
-    {
-
-
-        foreach($activityDataArray as $activityData)
-        {
-
-            if (!$this->isTimeInRange($activityData['time'], $dateEventStartTimestamp, $dateEventEndTimestamp))
-            {
-                throw new TimeIsOutOfRangeException('Aktivita je mimo rozsah akce.');
+                throw new TimeIsOutOfRangeException('Čas je mimo rozsah akce.');
             }
 
             $lastPointLat = $currentPointLat;
 
             $lastPointLon = $currentPointLon;
 
-            $currentPointLat = floatval($activityData['latlng'][0]);
+            $currentPointLat = floatval($point['latlng'][0]);
 
-            $currentPointLon = floatval($activityData['latlng'][1]);
+            $currentPointLon = floatval($point['latlng'][1]);
 
+            //dump($lastPointLat);
 
             $trackPointArray[] = [
                 'latitude' => $currentPointLat,
                 'longitude' => $currentPointLon,
-                'time' => $activityData['time'],
+                'time' => $point['time'],
                 'user_id' => $userId,
-                'cadence' => $activityData['cadence'],
-                'registration_id' => $registrationId
+                'cadence' => $point['cadence'],
             ];
 
 
             if ($lastPointLat != null) {
 
-                $activityDataDistance = round($this->haversineGreatCircleDistance($lastPointLat, $lastPointLon, $currentPointLat, $currentPointLon), 1);
+                $pointDistance = round($this->haversineGreatCircleDistance($lastPointLat, $lastPointLon, $currentPointLat, $currentPointLon), 1);
 
-                $distance += $activityDataDistance;
+                $distance += $pointDistance;
 
-
-
-                if ($activityData['seconds'] >= $timeDistance)
+                if ($distance >= $eventDistance)
                 {
-
-
-                   // $finishTime = $this->finishTimeCalculation($timeDistance,$activityData['distance'],$activityData['time'],$startDayTimestamp);
-
-                   $timeNavic = $activityData['seconds'] - $timeDistance;
-                   $distanceCm = $distance * 100;
-                   $cmZaSekundu = $distanceCm / $activityData['seconds'] ;
-                   $cmNavic = $cmZaSekundu * $timeNavic;
-                   $cmPoKorekci = $distanceCm - $cmNavic;
-                   $metryPoKorekci = intval(round($cmPoKorekci / 100));
-
-                   //dump(round(floatval($metryPoKorekci / 1000),2));
-                   //dd(round(floatval(($metryPoKorekci * 0.8) / 1000),2));
-
-
-
-
-
-
-
-
-
+                    $finishTime = $this->finishTimeCalculation($eventDistance,$point['distance'],$point['time'],$startDayTimestamp);
 
                     return [
-                  //      'finish_time' => $finishTime['finish_time'],
-                    //    'finish_time_sec' => $finishTime['finish_time_sec'],
-                    'finish_distance_km' => round(floatval($metryPoKorekci / 1000),2),
-                    'finish_distance_mile' => round(floatval(($metryPoKorekci * 0.8) / 1000),2),
-
-                       'pace' => $this->averageTimePerKm($distance,$timeDistance),
-                       'pace_mile' => $this->pacePerMile($distance,$timeDistance),
+                        'finish_time' => $finishTime['finish_time'],
+                        'finish_time_sec' => $finishTime['finish_time_sec'],
+                        'pace' => $finishTime['pace'],
                         'track_points' => $trackPointArray,
-                      // 'registration_id' => $registrationId,
+                      //  'registration_id' => $registrationId,
                         'finish_time_date' => $activityDate,
                     ];
                 }
             }
         }
 
-        throw new SmallDistanceException('Čas běhu je kratší než 1 hodina');
+        throw new SmallDistanceException('Vzdálenost je menší než délka tratě.');
 
     }
-
-
-    private function pacePerMile($eventDistance,$finishTimeSec)
-    {
-        $secondPerMile = round(($finishTimeSec * 1609.3) / $eventDistance);
-
-        $timeObj = Carbon::createFromTime(0, 0, 0)->addSeconds($secondPerMile);
-
-        if($secondPerMile > 599)
-        {
-            return $timeObj->format('i:s');
-        }
-        else
-        {
-            return substr($timeObj->format('i:s'), 1);
-        }
-
-
-    }
-
-
-
-
-
-
 
     //otazka zda spis nevyvolat vyjimky a logovat v controlleru, asi predelat
     public function getActivityFinishDataFromStravaWebhook($activityData, $registration, $userId)
     {
-
-
-      //  print_r($activityData);
-
-        //exit();
-
-
-
-
-        $userRegisteredToSomeEvent = false;
+       //dd($activityData);
         //pocatecni cas aktivity v UNIX sekundach
-
-        if(isset($activityData['start_date_local']))
-        {
-            $startDayTimestamp = strtotime($activityData['start_date_local']);
-        }
-        else
-        {
-            Log::alert("Uzivatel $userId nahrál aktivitu, ale ve chybí nutný údaj 'start_date_local', bez kterého to pokračovat nemůže, důvodí může být více.");
-
-            exit();
-        }
-
-
+        $startDayTimestamp = strtotime($activityData['start_date_local']);
         //datum aktivity pro dotaz do DB
         $activityDate = date("Y-m-d", $startDayTimestamp);
+       // dd($activityDate);
         //pole pro ulozeni bodu trasy
         $trackPointArray = [];
         //vytvoreni noveho pole se stejnymi paramatry jak GPX soubor
         $activityDataArray = [];
         // vytvoreni pole ve stejne strukture jak GPX soubor
-
-        /*
-            proverit, zda tu delkau zavodu nekontrolovat uz tady at se zbytecne nemusi tvorit pole
-
-        */
-
-
-        if(!isset($activityData['latlng']))
-        {
-            Log::alert("Problém s daty, pole latlng je prázdné");
-
-            exit();
-        }
-
         foreach ($activityData['latlng']['data'] as $key => $val)
         {
             $activityDataArray[] = [
@@ -639,161 +456,32 @@ class ResultService
                     'time' => $activityData['time']['data'][$key] + $startDayTimestamp,
                     'distance' => $activityData['distance']['data'][$key],
                     'altitude' => $activityData['altitude']['data'][$key],
-                    'cadence' => $activityData['cadence']['data'][$key],
-                    'seconds' => $activityData['time']['data'][$key],
+                    'cadence' => $activityData['cadence']['data'][$key]
                 ];
         }
-
-
-        /* výpočet celkové vzdálenosti aktivity */
+        //výpočet celkové vzdálenosti aktivity
         $activityDistance = $this->activityDistanceCalculation($activityDataArray);
 
-
-
-        /* kontrola, jestli v daném časovém období existuje nějaký závod,
-            s PLATFORM:ID se tam nedostane Kiptumtime
-            bere to vsechny zavody s mensi vzdalenosti, nez vypoctena vdalenost behu, tzn. zavody, ktere jsou na cas a maji nastaveno 0, to bere taky automaticky
-        */
-        $events = Event::where('distance', '<=', $activityDistance)
-                        //->where('platform_id',env("PLATFORM_ID"))
-                        ->where('date_start', '<=', $activityDate)
+        $events = Event::where('date_start', '<=',$activityDate)
                         ->where('date_end', '>=', $activityDate)
-                        ->orderBy('event_type_id','DESC')
-                        ->orderBy('distance','DESC')
-                        ->get(['id', 'distance','event_type_id','time','name']);
-
-
-                      /*
-                        foreach ($events as $key => $event)
-                        {
-                           echo "$event->id,$event->name\n";
-                            Log::alert($event->name);
-                        }
-
-                        exit();*/
-
-
-
-        /* zadny zavod neni */
+                        ->where('distance', '<=', $activityDistance)
+                        ->orderBy('distance', 'DESC')
+                        ->get(['id', 'distance']);
+        //kontrola, jestli v daném časovém období existuje nějaký závod
         if (count($events) == 0)
         {
-            Log::alert("Uzivatel $userId nahrál aktivitu, ale v daném časovém období a v patřičné délce neexistuje žádný závod.");
+            Log::alert('Uzivatel '.$userId.' nahrál aktivitu, ale v daném časovém období a v patřičné délce neexistuje žádný závod.');
 
             exit();
         }
-
-
-
-
-        /* procházení závodů, jestli délkově odpovídají a jestli je k nim uzivatel prihlasen */
+        //procházení závodů, jestli délkově odpovídají a jestli je k nim uzivatel prihlasen
         foreach ($events as $key => $event)
         {
-
-            $registration_exists = $registration->registrationExists($userId, $event['id'],NULL,NULL);
-
-
-
-
-
-
-            if(!is_null($registration_exists))
-            {
-                $registrationId = $registration->registrationExists($userId, $event['id'],NULL,NULL)->id;
-
-            }
-            else
-            {
-                continue;
-            }
-
-
-
-
             //kontrola, jestli je uzivatel k nemu prihlasen
-            if (!is_null($registrationId))
+            if (isset($registration->registrationExists($event['id'], $userId)->id))
             {
-                $userRegisteredToSomeEvent = true;
-
-
-                if($event['event_type_id'] == 2)
-                {
-
-
-
-                    foreach($activityDataArray as $activityData)
-                    {
-                        //vytvorime TrackPointArray pro ulozeni do DB
-                        $trackPointArray[] = [
-                            'latitude' => $activityData['latlng'][0],
-                            'longitude' => $activityData['latlng'][1],
-                            'time' => $activityData['time'],
-                            'altitude' => $activityData['altitude'],
-                            'user_id' => $userId,
-                            'cadence' => $activityData['cadence'],
-                            'registration_id' => $registrationId
-
-                        ];
-
-
-                      //  $activityDataDistance = round($this->haversineGreatCircleDistance($lastPointLat, $lastPointLon, $currentPointLat, $currentPointLon), 1);
-
-                        //$distance += $activityDataDistance;
-
-
-
-
-
-
-
-
-                        //pokud je vzdálenost větší než délka závodu, tak se vypocita cas a dal se v cyklu, ktery prochazi polem, nepokracuje
-                        if ($activityData['seconds'] >= $event['time'])
-                        {
-
-
-                            $timeNavic = $activityData['seconds'] - $event['time'];
-                            $distanceCm = $activityData['distance'] * 100;
-                            $cmZaSekundu = $distanceCm / $activityData['seconds'] ;
-                            $cmNavic = $cmZaSekundu * $timeNavic;
-                            $cmPoKorekci = $distanceCm - $cmNavic;
-                            $metryPoKorekci = intval(round($cmPoKorekci / 100));
-
-
-
-
-
-
-
-
-
-                                    return [
-                                        //      'finish_time' => $finishTime['finish_time'],
-                                          //    'finish_time_sec' => $finishTime['finish_time_sec'],
-                                          'finish_distance_km' => round(floatval($metryPoKorekci / 1000),2),
-                                          'finish_distance_mile' => round(floatval(($metryPoKorekci * 0.8) / 1000),2),
-
-                                             'pace_km' => $this->averageTimePerKm($activityData['distance'],$event['time']),
-                                             'pace_mile' => $this->pacePerMile($activityData['distance'],$event['time']),
-                                              'track_points' => $trackPointArray,
-                                             'registration_id' => $registrationId,
-                                              'finish_time_date' => $activityDate,
-                                          ];
-
-
-                        }
-
-
-
-                    }
-
-                }
-
-
-
-                else
-                {
-
-
+                //pokud ano, tak si vezmeme id registrace uzivatele k zavodu
+                $registrationId = $registration->registrationExists($event['id'], $userId)->id;
                 //prochazeni pole s daty aktivity
                 foreach($activityDataArray as $activityData)
                 {
@@ -805,16 +493,8 @@ class ResultService
                         'altitude' => $activityData['altitude'],
                         'user_id' => $userId,
                         'cadence' => $activityData['cadence'],
-                        'registration_id' => $registrationId
 
                     ];
-
-
-
-
-
-
-
                     //pokud je vzdálenost větší než délka závodu, tak se vypocita cas a dal se v cyklu, ktery prochazi polem, nepokracuje
                     if($activityData['distance'] >= $event['distance'])
                     {
@@ -823,46 +503,20 @@ class ResultService
                         return [
                             'finish_time' => $finishTime['finish_time'],
                             'finish_time_sec' => $finishTime['finish_time_sec'],
-                            'pace_km' => $finishTime['pace'],
+                            'pace' => $finishTime['pace'],
                             'track_points' => $trackPointArray,
                             'registration_id' => $registrationId,
                             'finish_time_date' => $activityDate,
                         ];
                     }
                 }
-
             }
-
-                //break;
-            }
-
-
-        }
-
-
-
-
-
-
-
-
-        if(!$userRegisteredToSomeEvent)
-        {
             Log::alert('Uživatel '.$userId.' není prihlaseny k zadnemu zavodu v daném časovém období a odpovídající délce.');
 
             exit();
-
         }
 
     }
-
-
-
-    private function webhookType2($activityDataArray,$event)
-    {
-
-    }
-
 
 
 
@@ -1185,9 +839,6 @@ class ResultService
 
         $finishTime = $this->finishTimeRecountAccordingDistance($eventDistance, $rawActivityDistance, $rawFinishTimeSec);
 
-
-
-
         return [
             'finish_time' => $finishTime['finish_time'],
 
@@ -1395,34 +1046,23 @@ class ResultService
 
             $result->finish_time_date = $finishTime['finish_time_date'];
 
+            $result->finish_time = $finishTime['finish_time'];
+
+            // Fixed: Changed from 'pace' to 'pace_km' to match database schema - Claude Code 2025-11-26
             $result->pace_km = $finishTime['pace'];
 
+            // Added: Calculate pace per mile (1 mile = 1.60934 km) - Claude Code 2025-11-26
+            // Convert pace_km from "m:ss" format to seconds
+            $paceParts = explode(':', $finishTime['pace']);
+            $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
 
-            if(isset($finishTime['finish_time']))
-            {
-                $result->finish_time = $finishTime['finish_time'];
-            }
+            // Calculate pace per mile
+            $paceMileSeconds = round($paceKmSeconds * 1.60934);
+            $paceMileMinutes = floor($paceMileSeconds / 60);
+            $paceMileSecondsRemainder = $paceMileSeconds % 60;
+            $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
 
-            if(isset($finishTime['finish_time_sec']))
-            {
-                $result->finish_time_sec = $finishTime['finish_time_sec'];
-            }
-
-            if(isset($finishTime['finish_distance_km']))
-            {
-                $result->finish_distance_km = $finishTime['finish_distance_km'];
-            }
-
-            if(isset($finishTime['finish_distance_mile']))
-            {
-                $result->finish_distance_mile = $finishTime['finish_distance_mile'];
-            }
-
-            if(isset($finishTime['pace_mile']))
-            {
-                $result->pace_mile = $finishTime['pace_mile'];
-            }
-
+            $result->finish_time_sec = $finishTime['finish_time_sec'];
 
             DB::beginTransaction();
 
@@ -1432,12 +1072,10 @@ class ResultService
             }
             catch(QueryException $e)
             {
-
                 return [
                     'error' => 'ERROR_DB',
 
                     'error_message' => $e->getMessage(),
-
                 ];
             }
 
@@ -1447,7 +1085,6 @@ class ResultService
             }
 
             $trackPoint = new TrackPoint();
-
 
             try{
                 $trackPoint::insert($finishTime['track_points']);
@@ -1459,7 +1096,6 @@ class ResultService
                 if($e->errorInfo[1] == 1062)
                 {
                     DB::rollback();
-
                     throw new DuplicityTimeException();
                 }
             }
@@ -1469,7 +1105,6 @@ class ResultService
             ->get();
 
             $lastId = $result->id;
-
             foreach($r as $key => $value)
             {
                 if($value->id == $lastId)
@@ -1483,7 +1118,7 @@ class ResultService
             $event = new Event();
 
             return [
-                'results' =>  Result::selectRaw('id,DATE_FORMAT(finish_time_date,"%e.%c") AS date,finish_time,pace_km')
+                'results' =>  Result::selectRaw('id,DATE_FORMAT(finish_time_date,"%e.%c") AS date,finish_time')
                 ->where('registration_id', $registrationId)
                 ->orderBy('finish_time', 'asc')
                 ->get(),

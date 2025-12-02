@@ -12,19 +12,19 @@ class ResultController extends Controller
 {
     public function index(Request $request, Result $result)
     {
-     //   dd($result->resultsOverall($request->eventId));
+        dd($result->resultsOverall($request->eventId));
 
         return view('result.index');
     }
 
     public function manage(Request $request,Result $result)
     {
-
-       // dd($result->getAllUserResults($request->user()->id));
         return view('result.manage', [
             'results' => $result->getAllUserResults($request->user()->id)
         ]);
+        
     }
+
 
     public function delete(Request $request)
     {
@@ -44,7 +44,7 @@ class ResultController extends Controller
 
     public function resultUser(Request $request, Result $result)
     {
-        return response()->json($result->resultsIndividual($request->registrationId,$request->eventTypeId));
+        return response()->json($result->resultsIndividual($request->registrationId));
     }
 
 

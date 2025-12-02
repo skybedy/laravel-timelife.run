@@ -25,13 +25,6 @@ use Exception;
 class StravaController extends Controller
 {
 
-
-    public function index()
-    {
-        return view('strava.index');
-
-    }
-
     /**
      *   zpracování webhook  ze Stravy
     */
@@ -49,7 +42,7 @@ class StravaController extends Controller
         Log::info('Webhook event received!', ['query' => $request->query(),'body' => $request->all()]);
         //z pozadavku si vezmeme id uzivatele Stravy a podle nej najdeme uzivatele v nasi databazi
         $stravaId = $request->input('owner_id');
-        //ziskani Usera
+        //ziskani Usera 
         $user = User::select('id', 'strava_access_token', 'strava_refresh_token', 'strava_expires_at')->where('strava_id', $stravaId)->first();
         //ted musime zjistit, jestli token pro REST API jeste plati
         if ($user->strava_expires_at > time())
@@ -81,17 +74,17 @@ class StravaController extends Controller
             ]);
 
             $body = $response->body();
-
+            
             $content = json_decode($body, true);
 
             $user1 = User::where('id', $user->id)->first();
-
+            
             $user1->strava_access_token = $content['access_token'];
-
+            
             $user1->strava_refresh_token = $content['refresh_token'];
-
+            
             $user1->strava_expires_at = $content['expires_at'];
-
+            
             $user1->save();
 
             $url = config('strava.stream.url').$request->input('object_id').config('strava.stream.params');
@@ -115,7 +108,7 @@ class StravaController extends Controller
 
         return response('OK', 200);
     }
-
+    
 
 
 
@@ -130,6 +123,7 @@ class StravaController extends Controller
     public function dataProcessing($resultService, $registration, $trackPoint, $event, $dataStream, $userId)
     {
 
+        //return $dataStream;
         $finishTime = $resultService->getActivityFinishDataFromStravaWebhook($dataStream, $registration, $userId);
 
         $result = new Result();
@@ -138,38 +132,11 @@ class StravaController extends Controller
 
         $result->finish_time_date = $finishTime['finish_time_date'];
 
+        $result->finish_time = $finishTime['finish_time'];
 
-        $result->pace_km = $finishTime['pace_km'];
+        $result->pace = $finishTime['pace'];
 
-
-        if(isset($finishTime['finish_time']))
-        {
-            $result->finish_time = $finishTime['finish_time'];
-        }
-
-        if(isset($finishTime['finish_time_sec']))
-        {
-            $result->finish_time_sec = $finishTime['finish_time_sec'];
-        }
-
-        if(isset($finishTime['finish_distance_km']))
-        {
-            $result->finish_distance_km = $finishTime['finish_distance_km'];
-        }
-
-        if(isset($finishTime['finish_distance_mile']))
-        {
-            $result->finish_distance_mile = $finishTime['finish_distance_mile'];
-        }
-
-        if(isset($finishTime['pace_mile']))
-        {
-            $result->pace_mile = $finishTime['pace_mile'];
-        }
-
-
-
-
+        $result->finish_time_sec = $finishTime['finish_time_sec'];
 
         DB::beginTransaction();
 
@@ -205,14 +172,14 @@ class StravaController extends Controller
                 exit();
             }
         }
-
+        
         Log::info('Uzivatel '.$userId.' nahral aktivitu.');
     }
 
     public function getStrava(Request $request)
     {
 
-        \Log::info($request->query());
+        Log::info($request->query());
         $VERIFY_TOKEN = 'STRAVA';
 
         $mode = $request->query('hub_mode');
@@ -221,12 +188,12 @@ class StravaController extends Controller
 
         //        if ($mode && $token) {
         if ($mode === 'subscribe' && $token === $VERIFY_TOKEN) {
-            \Log::info('WEBHOOK_VERIFIED');
+            Log::info('WEBHOOK_VERIFIED');
 
             return response()->json(['hub.challenge' => $challenge]);
         } else {
 
-            \Log::info('neco-spatne');
+            Log::info('neco-spatne');
 
             return response('Forbidden', 403);
         }
@@ -262,7 +229,6 @@ class StravaController extends Controller
 
             $finishTime = $resultService->getActivityFinishDataFromStravaWebhook($response, $registration, $user->id);
 
-
             $result = new Result();
 
             $result->registration_id = $finishTime['registration_id'];
@@ -271,7 +237,7 @@ class StravaController extends Controller
 
             $result->finish_time = $finishTime['finish_time'];
 
-            $result->pace_km = $finishTime['pace'];
+            $result->pace = $finishTime['pace'];
 
             $result->finish_time_sec = $finishTime['finish_time_sec'];
 
@@ -324,37 +290,25 @@ class StravaController extends Controller
     {
 
         $response = Http::post('https://www.strava.com/oauth/token', [
-            'client_id' => env('STRAVA_CLIENT_ID'),
-            'client_secret' => env('STRAVA_CLIENT_SECRET'),
+            'client_id' => '117954',
+            'client_secret' => 'a56df3b8bb06067ebe76c7d23af8ee8211d11381',
             'code' => $request->query('code'),
             'grant_type' => 'authorization_code',
         ]);
 
         $body = $response->body();
-
         $content = json_decode($body, true);
+        //dd($content);
 
-        $strava_id_exists = User::where('strava_id',$content['athlete']['id'])->exists();
-        
-        if(!$strava_id_exists)
-        {
-            $user = User::find($request->userId);
-            $user->strava_id = $content['athlete']['id'];
-            $user->strava_access_token = $content['access_token'];
-            $user->strava_refresh_token = $content['refresh_token'];
-            $user->strava_expires_at = $content['expires_at'];
-            $user->strava_scope = $request->query('scope');
-            $user->save();
-        }
-       
-        if(is_null($request->query('callback')))
-        {
-            return redirect('/');
-        }    
-        else
-        {
-            return redirect($request->query('callback'));
-        }
+        $user = User::find($request->userId);
+        $user->strava_id = $content['athlete']['id'];
+        $user->strava_access_token = $content['access_token'];
+        $user->strava_refresh_token = $content['refresh_token'];
+        $user->strava_expires_at = $content['expires_at'];
+        $user->strava_scope = $request->query('scope');
+        $user->save();
+
+        return redirect('/');
 
     }
 
@@ -362,6 +316,6 @@ class StravaController extends Controller
 
     public function authorizeStrava(Request $request)
     {
-        return redirect('https://www.strava.com/oauth/authorize?client_id=117954&response_type=code&redirect_uri=https://virtual-charity.run/redirect-strava/'.$request->user()->id.'&approval_prompt=force&scope=activity:read');
+        return redirect('https://www.strava.com/oauth/authorize?client_id=117954&response_type=code&redirect_uri='.env('APP_URL').'/redirect-strava/'.$request->user()->id.'&approval_prompt=force&scope=activity:read_all');
     }
 }
