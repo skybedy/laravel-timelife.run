@@ -159,10 +159,7 @@ class RegistrationController extends Controller
 
             }
 
-    public function handleWebhookTest()
-    {
-        Log::info("hoj");
-    }
+
 
     public function handleWebhook(Request $request)
     {
