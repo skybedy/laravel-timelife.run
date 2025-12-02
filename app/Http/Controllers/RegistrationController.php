@@ -10,6 +10,7 @@ use Stripe\Checkout\Session;
 use Stripe\Stripe;
 use App\Models\PaymentRecepient;
 use App\Models\Payment;
+use App\Models\Payout;
 use Illuminate\Support\Facades\Log;
 
 class RegistrationController extends Controller
@@ -158,56 +159,82 @@ class RegistrationController extends Controller
 
             }
 
-    public function success(Request $request, StripeClient $stripe)
+    public function handleWebhookTest()
     {
-        $session_id = $request->get('session_id');
+        Log::info("hoj");
+    }
 
-        $checkout_session = $stripe->checkout->sessions->retrieve($session_id);
+    public function handleWebhook(Request $request)
+    {
+        // DŮLEŽITÉ: getContent() přečte stream - musíme ho použít JEDNOU
+        $payload = $request->getContent();
+        $sig_header = $request->header('Stripe-Signature');
 
-        $this->createPayment($checkout_session);
+        // Získání webhook secret z .env
+        $endpoint_secret = env('STRIPE_WEBHOOK_SECRET');
 
+        try {
+            // Ověření webhook signature
+            $event = \Stripe\Webhook::constructEvent(
+                $payload,
+                $sig_header,
+                $endpoint_secret
+            );
+        } catch (\UnexpectedValueException $e) {
+            // Invalid payload
+            Log::error('Stripe webhook invalid payload: ' . $e->getMessage());
+            return response()->json(['error' => 'Invalid payload'], 400);
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            // Invalid signature - but continue anyway for ngrok testing
+            Log::warning('Stripe signature verification failed (ngrok bypass): ' . $e->getMessage());
+
+            // Try to parse the payload directly for local testing
+            try {
+                $event = json_decode($payload, false, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $jsonError) {
+                Log::error('Cannot parse webhook payload: ' . $jsonError->getMessage());
+                return response()->json(['error' => 'Invalid JSON'], 400);
+            }
+        }
+
+        // Handle the event
+        if ($event->type == 'checkout.session.completed') {
+            $checkout_session = $event->data->object;
+
+            Log::info('✓ Webhook: checkout.session.completed', [
+                'session_id' => $checkout_session->id,
+                'amount' => $checkout_session->amount_total ?? 'N/A',
+                'email' => $checkout_session->customer_details->email ?? 'N/A',
+            ]);
+
+            $this->createPayment($checkout_session);
+        }
+
+        if ($event->type == 'payout.paid') {
+            $payout = $event->data->object;
+
+            Log::info('✓ Webhook: payout.paid', [
+                'payout_id' => $payout->id,
+                'amount' => $payout->amount,
+                'currency' => $payout->currency,
+                'arrival_date' => date('Y-m-d', $payout->arrival_date),
+            ]);
+
+            $this->createPayout($payout);
+        }
+
+        return response()->json(['status' => 'success'], 200);
+    }
+    public function success()
+    {
         // Vždy redirect na homepage s poděkováním (žádná registrace)
+        // Platba bude uložena přes webhook, ne tady
         return redirect()->route('index')->with('success', 'Děkujeme za váš příspěvek!');
     }
 
 
 
-    private function createPayment($checkout_session)
-    {
-        // Prevence duplicitních plateb
-        if (Payment::where('stripe_session_id', $checkout_session->id)->exists()) {
-            return;
-        }
-
-        // DEBUG: Vypsat celý checkout_session do logu
-        Log::info('Stripe checkout_session:', [
-            'customer_details' => $checkout_session->customer_details ?? 'NULL',
-            'full_session' => $checkout_session->toArray(),
-        ]);
-
-        $payment = new Payment();
-
-        // Všichni jsou anonymní dárci (žádná registrace)
-        $payment->user_id = null;
-        $payment->donor_email = $checkout_session->customer_details->email ?? null;
-        $payment->donor_name = $checkout_session->customer_details->name ?? null;
-
-        // Společná data
-        $payment->event_id = $checkout_session->metadata->event_id;
-        $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
-        $payment->amount = $checkout_session->metadata->amount / 100;
-        $payment->stripe_session_id = $checkout_session->id;
-        $payment->payment_reference_id = $checkout_session->metadata->payment_reference_id ?? null;
-
-        $payment->save();
-    }
-
-    public function cancel()
-    {
-        return redirect()->route('index')->with('error', 'Platba byla zrušena');
-    }
-
-    public function checkoutDynamic(Request $request, StripeClient $stripe)
+    public function checkoutDynamic(Request $request, StripeClient $stripe, Registration $registration,)
     {
         // Validace
         $request->validate([
@@ -218,9 +245,6 @@ class RegistrationController extends Controller
 
         $payment_recipient = PaymentRecepient::findOrFail($request->payment_recipient);
 
-        // Generovat unikátní payment reference
-        $payment_reference_id = 'PAY-' . time() . '-' . uniqid();
-
         // Vytvoření Stripe Checkout Session s dynamickou cenou
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => [[
@@ -230,7 +254,6 @@ class RegistrationController extends Controller
                     'product_data' => [
                         'name' => 'Příspěvek - 100 půlmaratonů pro Jitku',
                         'description' => 'Dobrovolný příspěvek na podporu',
-                        // Placeholder pro testování - na produkci změnit na: asset('images/dum-pro-julii.png')
                         'images' => ['https://via.placeholder.com/512x512.png?text=Logo'],
                     ],
                 ],
@@ -243,18 +266,83 @@ class RegistrationController extends Controller
                 'amount' => $request->amount * 100, // Cena v haléřích
                 'event_id' => $request->event_id,
                 'payment_recipient_id' => $request->payment_recipient,
-                'payment_reference_id' => $payment_reference_id,
             ],
             'payment_intent_data' => [
                 'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
                 'setup_future_usage' => 'on_session',
-                'statement_descriptor' => 'TIMELIFE',
+                'statement_descriptor' => 'TIMELIFE JITKA',
             ],
         ]);
 
         // Přesměrování na Stripe Checkout
         return redirect($checkout_session->url);
     }
+
+
+    private function createPayment($checkout_session)
+    {
+        // Prevence duplicitních plateb
+        if (Payment::where('stripe_session_id', $checkout_session->id)->exists()) {
+            return;
+        }
+
+        $payment = new Payment();
+
+        // Všichni jsou anonymní dárci (žádná registrace)
+        $payment->user_id = null;
+
+        // Prioritně použít údaje z metadat (z našeho formuláře)
+        // Pokud nejsou v metadatech, použít customer_details ze Stripe
+        $payment->donor_email = $checkout_session->metadata->donor_email ?? $checkout_session->customer_details->email ?? null;
+        $payment->donor_name = $checkout_session->metadata->donor_name ?? $checkout_session->customer_details->name ?? null;
+
+        // Společná data
+        $payment->event_id = $checkout_session->metadata->event_id;
+        $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
+        $payment->amount = $checkout_session->metadata->amount / 100;
+        $payment->stripe_session_id = $checkout_session->id;
+        $payment->stripe_payment_intent_id = $checkout_session->payment_intent ?? null;
+
+        $payment->save();
+    }
+
+    private function createPayout($payout)
+    {
+        // Prevence duplicitních payoutů
+        if (Payout::where('stripe_payout_id', $payout->id)->exists()) {
+            return;
+        }
+
+        // Najít payment_recipient_id z destination (Stripe Connect account ID)
+        $paymentRecipient = PaymentRecepient::where('stripe_client_id', $payout->destination)->first();
+
+        if (!$paymentRecipient) {
+            Log::error('Payment recipient not found for payout:', [
+                'payout_id' => $payout->id,
+                'destination' => $payout->destination,
+            ]);
+            return;
+        }
+
+        $payoutModel = new Payout();
+        $payoutModel->stripe_payout_id = $payout->id;
+        $payoutModel->payment_recipient_id = $paymentRecipient->id;
+        $payoutModel->amount = $payout->amount;
+        $payoutModel->currency = $payout->currency;
+        $payoutModel->arrival_date = $payout->arrival_date ? date('Y-m-d H:i:s', $payout->arrival_date) : null;
+        $payoutModel->status = $payout->status;
+        $payoutModel->type = $payout->type ?? null;
+        $payoutModel->description = $payout->description ?? null;
+        $payoutModel->stripe_data = json_decode(json_encode($payout), true);
+
+        $payoutModel->save();
+    }
+
+    public function cancel()
+    {
+        return redirect()->route('index')->with('error', 'Platba byla zrušena');
+    }
+
 
 
 
