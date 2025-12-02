@@ -35,9 +35,23 @@ class Event extends Model
             ->get();
     }
 
+    public function allSameSeriesEvents($eventId)
+    {
+        return self::where('id', '!=', $eventId)
+            ->where('platform_id', env('PLATFORM_ID'))
+            ->where('display', 1)
+            ->where('serie_id', function ($query) use ($eventId) {
+                $query->select('serie_id')
+                    ->from('events')
+                    ->where('id', $eventId)
+                    ->limit(1);
+            })
+            ->select("id", "name")
+            ->get();
+    }
+
     public function eventShow()
     {
-
         $eventId = 1;
         $userId = 1;
 
@@ -48,6 +62,5 @@ class Event extends Model
             ->first();
 
         return $event;
-
     }
 }
