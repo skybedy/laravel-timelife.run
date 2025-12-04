@@ -78,6 +78,10 @@ class IndexController extends Controller
 
     }
 
+    public function story()
+    {
+        return view('index.story');
+    }
 
     public function autodistanceUpload(Request $request, ResultService $resultService, Registration $registration, TrackPoint $trackPoint, Event $event)
     {

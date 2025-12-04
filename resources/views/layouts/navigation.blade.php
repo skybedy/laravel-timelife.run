@@ -17,22 +17,12 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-6 lg:space-x-8 sm:-my-px sm:ms-10 md:flex bg-red-70">
-                    <x-nav-link :href="route('index')" :active="request()->routeIs('index')" class="hidden text-lg lg:text-xl text-gray-600">
-                        {{ __('Hlavní strana') }}
+                    <x-nav-link :href="route('story')" :active="request()->routeIs('story')" class="text-lg lg:text-xl text-gray-600">
+                        {{ __('Příběh') }}
                     </x-nav-link>
 
-                    <!--
-                     <x-nav-link :href="route('event.index')" :active="request()->routeIs('event.index')" class="text-lg lg:text-xl text-gray-600">
-                        {{ __('Závody') }}
-                    </x-nav-link>
-                -->
-
-                    <x-nav-link :href="route('how_it_works.index')" :active="request()->routeIs('how_it_works.index')" class="hidden text-lg lg:text-xl text-gray-600">
-                        {{ __('Jak na to') }}
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('about.index')" :active="request()->routeIs('about.index')" class="hidden text-lg lg:text-xl text-gray-600">
-                        {{ __('O platformě') }}
+                    <x-nav-link href="#vysledky" class="text-lg lg:text-xl text-gray-600">
+                        {{ __('Výsledky') }}
                     </x-nav-link>
                 </div>
 

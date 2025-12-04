@@ -17,30 +17,50 @@
                     <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
 
                         <!-- Vnitřní šedý box -->
-                        <div class="bg-gray-700 rounded-2xl overflow-hidden">
+                        <div class="bg-[#374151] rounded-2xl overflow-hidden">
 
                             <!-- Fotka -->
-                            <div class="w-full h-48 sm:h-64 md:h-80 lg:h-96 relative overflow-hidden rounded-t-2xl">
+                            <div class="w-full relative rounded-t-2xl">
                                 <img src="{{ asset('images/jitka.png') }}"
                                      alt="{{ $events[0]->name }}"
-                                     class="w-full h-full object-cover object-center shadow-inner">
-                                <div class="absolute inset-0 shadow-inner pointer-events-none"></div>
+                                     class="w-full h-auto object-contain shadow-inner rounded-t-2xl">
                             </div>
+
+                            <!-- Bílá linka pod fotkou -->
+                            <div class="border-t-4 border-white"></div>
 
                             <!-- Název závodu -->
                             <div class="text-white text-center font-black bg-gray-700 px-6 py-8">
-                                <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl border-b border-white pb-4 mb-6">
-                                100 půmaratonů Jitky Dvořáčkové ve 100 dnech pro dětský hospic Dům pro Julii
+                                <div class="text-5xl sm:text-6xl md:text-7xl lg:text-7xl mt-10 pb-4">
+
+                                    <p class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl 2xl:text-9xl relative pb-2 inline-block mb-2">
+                                        Jitka Dvořáčková
+                                        <span class="absolute bottom-0 left-0 right-0 h-1 bg-white"></span>
+                                    </p>
+
+                                    <p class="text-5xl sm:text-6xl md:text-7xl lg:text-7xl">100 půmaratonů za 100 dní</p>
+
                                 </div>
 
-                                @if($events[0]->second_name)
-                                    <div class="text-2xl sm:text-3xl md:text-4xl mb-6 text-gray-300">
-                                        {{ $events[0]->second_name }}
-                                    </div>
-                                @endif
+                                <!-- Logo Dům pro Julii -->
+                                <div class="flex justify-center my-6">
+                                    <a href="https://www.dumprojulii.com/" target="_blank" rel="noopener noreferrer" class="transition-opacity hover:opacity-80">
+                                        <img src="{{ asset('images/dum-pro-julii-logo-white.png') }}" alt="Dům pro Julii" class="h-36 sm:h-48 md:h-60 w-auto">
+                                    </a>
+                                </div>
+
+                                <div class="text-2xl sm:text-3xl md:text-4xl lg:text-[2.8rem] text-white font-serif italic flex items-center justify-center gap-3">
+                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span>Charitativní počin pro dětský hospic <a href="https://www.dumprojulii.com/" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-200 transition-colors">Dům pro Julii</a></span>
+                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
 
                                 <!-- Oddělení -->
-                                <div class="border-t border-white my-8"></div>
+                                <div class="border-t border-white mt-4 mb-8"></div>
 
                                 <!-- Info údaje -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -191,7 +211,7 @@
         
 
                 <!-- Tabulka s výsledky -->
-                <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-8 mb-8 p-8">
+                <div id="vysledky" class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-8 mb-8 p-8">
                     <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Výsledky</h2>
 
                     <div class="overflow-auto">
