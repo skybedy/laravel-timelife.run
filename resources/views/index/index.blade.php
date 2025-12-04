@@ -21,7 +21,7 @@
 
                             <!-- Fotka -->
                             <div class="w-full relative rounded-t-2xl">
-                                <img src="{{ asset('images/jitka.png') }}"
+                                <img src="{{ asset('images/jitka-logo.png') }}"
                                      alt="{{ $events[0]->name }}"
                                      class="w-full h-auto object-contain shadow-inner rounded-t-2xl">
                             </div>
