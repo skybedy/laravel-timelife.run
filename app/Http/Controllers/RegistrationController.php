@@ -251,7 +251,7 @@ class RegistrationController extends Controller
                     'product_data' => [
                         'name' => 'Příspěvek - 100 půlmaratonů pro Jitku',
                         'description' => 'Dobrovolný příspěvek na podporu',
-                        'images' => ['https://via.placeholder.com/512x512.png?text=Logo'],
+                        'images' => ['https://liferun.cz/images/dum-pro-julii-logo.png'],
                     ],
                 ],
                 'quantity' => 1,
