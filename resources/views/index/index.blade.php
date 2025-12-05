@@ -201,8 +201,9 @@
                                     <input type="hidden" name="event_id" value="10">
                                     <input type="hidden" name="payment_recipient_id" value="3">
 
-                                    <!-- Částka -->
-                                    <div class="mb-6">
+                                    <!-- Částka, Email, Jméno -->
+                                    <div class="mb-6 space-y-4">
+                                        <!-- Částka -->
                                         <div class="flex flex-col lg:flex-row items-center justify-center gap-4">
                                             <div class="flex items-center gap-4">
                                                 <svg class="w-10 h-10 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,6 +222,29 @@
                                                 class="w-48 px-6 py-3 rounded-lg text-gray-900 font-bold text-2xl focus:outline-none focus:ring-2 focus:ring-white"
                                             >
                                             <span class="text-white text-2xl font-bold">Kč</span>
+                                        </div>
+
+                                        <!-- Email a Jméno (volitelné) -->
+                                        <div class="max-w-2xl mx-auto space-y-3">
+                                            <div>
+                                                <input
+                                                    type="email"
+                                                    id="donor-email-inline"
+                                                    name="donor_email"
+                                                    placeholder="Váš email (nepovinné - pro potvrzení platby)"
+                                                    class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
+                                                >
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    id="donor-name-inline"
+                                                    name="donor_name"
+                                                    placeholder="Vaše jméno (nepovinné)"
+                                                    maxlength="255"
+                                                    class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
+                                                >
+                                            </div>
                                         </div>
                                     </div>
 
@@ -325,7 +349,6 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initializeStripeElementsInline();
-            initializeGooglePayInline();
             generateQRCodeInline();
 
             // Update bank amount when amount changes
@@ -344,6 +367,8 @@
 
         async function initializeStripeElementsInline() {
             const amount = document.getElementById('amount-inline').value;
+            const donorEmail = document.getElementById('donor-email-inline').value;
+            const donorName = document.getElementById('donor-name-inline').value;
 
             const response = await fetch('{{ route('registration.payment-intent.create') }}', {
                 method: 'POST',
@@ -355,6 +380,8 @@
                     amount: parseInt(amount),
                     event_id: 10,
                     payment_recipient_id: 3,
+                    donor_email: donorEmail,
+                    donor_name: donorName,
                 })
             });
 
@@ -375,53 +402,64 @@
             elementsInline = stripe.elements({ clientSecret, appearance });
             paymentElementInline = elementsInline.create('payment');
             paymentElementInline.mount('#payment-element-inline');
+
+            // Initialize Google Pay button after Elements is ready
+            initializeGooglePayInline(clientSecret);
         }
 
-        function initializeGooglePayInline() {
+        function initializeGooglePayInline(clientSecret) {
             const googlePayButton = document.getElementById('google-pay-button-inline');
 
-            const paymentRequest = stripe.paymentRequest({
-                country: 'CZ',
+            // Clear previous button if exists
+            googlePayButton.innerHTML = '';
+
+            const options = {
+                mode: 'payment',
+                amount: parseInt(document.getElementById('amount-inline').value) * 100,
                 currency: 'czk',
-                total: {
-                    label: 'Příspěvek pro Jitku Dvořáčkovou',
-                    amount: parseInt(document.getElementById('amount-inline').value) * 100,
-                },
-                requestPayerName: true,
-                requestPayerEmail: true,
+                paymentMethodCreation: 'manual',
+            };
+
+            const prButton = elementsInline.create('paymentRequestButton', {
+                paymentRequest: stripe.paymentRequest({
+                    country: 'CZ',
+                    currency: 'czk',
+                    total: {
+                        label: 'Příspěvek pro Jitku Dvořáčkovou',
+                        amount: parseInt(document.getElementById('amount-inline').value) * 100,
+                    },
+                    requestPayerName: true,
+                    requestPayerEmail: true,
+                }),
             });
 
-            paymentRequest.canMakePayment().then((result) => {
-                if (result && result.googlePay) {
-                    const prButton = elementsInline.create('paymentRequestButton', {
-                        paymentRequest: paymentRequest,
-                    });
+            // Check if the browser supports Google Pay / Apple Pay
+            prButton.on('ready', (event) => {
+                if (event.availablePaymentMethods) {
                     prButton.mount('#google-pay-button-inline');
                 } else {
-                    googlePayButton.innerHTML = '<p class="text-gray-500">Google Pay není k dispozici v tomto prohlížeči.</p>';
+                    googlePayButton.innerHTML = '<p class="text-gray-500 text-center">Google Pay není k dispozici v tomto prohlížeči.</p>';
                 }
             });
 
-            paymentRequest.on('paymentmethod', async (ev) => {
-                const response = await fetch('{{ route('registration.payment.confirm') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value
+            prButton.on('click', async (event) => {
+                const {error: submitError} = await elementsInline.submit();
+                if (submitError) {
+                    showErrorInline(submitError.message, 'googlepay-errors-inline');
+                    return;
+                }
+
+                // Confirm payment using client secret
+                const {error} = await stripe.confirmPayment({
+                    elements: elementsInline,
+                    clientSecret: clientSecret,
+                    confirmParams: {
+                        return_url: '{{ route('payment.success') }}',
                     },
-                    body: JSON.stringify({
-                        payment_method_id: ev.paymentMethod.id
-                    })
                 });
 
-                const data = await response.json();
-
-                if (data.error) {
-                    ev.complete('fail');
-                    showErrorInline(data.error, 'googlepay-errors-inline');
-                } else {
-                    ev.complete('success');
-                    window.location.href = '{{ route('payment.success') }}';
+                if (error) {
+                    showErrorInline(error.message, 'googlepay-errors-inline');
                 }
             });
         }
