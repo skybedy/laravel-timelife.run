@@ -50,7 +50,7 @@
                                     </a>
                                 </div>
 
-                                <div class="text-[0.76rem] xs:text-[0.98rem] sm:text-xl md:text-2xl lg:text-[2.2rem] xl:text-[2.8rem] text-white font-serif italic flex items-center justify-center gap-1 sm:gap-3">
+                                <div class="text-[0.63rem] xs:text-[0.98rem] sm:text-lg md:text-2xl lg:text-[2.2rem] xl:text-[2.8rem] text-white font-serif italic flex items-center justify-center gap-1 sm:gap-3">
                                     <svg class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                                     </svg>
