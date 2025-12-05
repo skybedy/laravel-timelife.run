@@ -551,10 +551,25 @@ class RegistrationController extends Controller
             'amount' => 'required|integer|min:50|max:1000000',
         ]);
 
+        // Generate QR code data in Czech SPD format
+        $accountNumber = '2101782768/2010';
+        $message = $request->donor_name ?? 'Dar pro Jitku';
+        $qrData = sprintf(
+            'SPD*1.0*ACC:%s*AM:%s*CC:CZK*MSG:%s',
+            $accountNumber,
+            $request->amount,
+            urlencode($message)
+        );
+
+        // Generate QR code as base64 PNG
+        $qrcode = new \chillerlan\QRCode\QRCode();
+        $qrCodeImage = $qrcode->render($qrData);
+
         return view('donations.pay-qr', [
             'amount' => $request->amount,
             'donorName' => $request->donor_name,
             'donorEmail' => $request->donor_email,
+            'qrCodeImage' => $qrCodeImage,
         ]);
     }
 

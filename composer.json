@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "chillerlan/php-qrcode": "*",
         "doctrine/dbal": "^4.0",
         "endlessmiles/polyline": "^1.0",
         "guzzlehttp/guzzle": "^7.8",

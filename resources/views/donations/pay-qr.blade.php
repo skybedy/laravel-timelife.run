@@ -22,7 +22,7 @@
 
                 <!-- QR kód -->
                 <div class="flex justify-center mb-6 bg-gray-50 p-8 rounded-lg">
-                    <canvas id="qr-code"></canvas>
+                    <img src="{{ $qrCodeImage }}" alt="QR kód pro platbu" class="max-w-sm">
                 </div>
 
                 <!-- Údaje pro ruční platbu -->
@@ -90,59 +90,4 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script>
-        console.log('QR Code script loaded');
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, generating QR code...');
-            generateQRCode();
-        });
-
-        function generateQRCode() {
-            const amount = {{ $amount }};
-            const accountNumber = '2101782768/2010';
-            const message = '{{ $donorName ?? "Dar pro Jitku" }}';
-
-            console.log('Amount:', amount);
-            console.log('Account:', accountNumber);
-            console.log('Message:', message);
-
-            // Czech QR payment format (Short Payment Descriptor)
-            // Format: SPD*1.0*ACC:<account>*AM:<amount>*CC:CZK*MSG:<message>
-            const qrData = `SPD*1.0*ACC:${accountNumber}*AM:${amount}*CC:CZK*MSG:${encodeURIComponent(message)}`;
-            console.log('QR Data:', qrData);
-
-            const canvas = document.getElementById('qr-code');
-            console.log('Canvas element:', canvas);
-
-            if (!canvas) {
-                console.error('Canvas element not found!');
-                return;
-            }
-
-            if (typeof QRCode === 'undefined') {
-                console.error('QRCode library not loaded!');
-                canvas.parentElement.innerHTML = '<p class="text-red-600">QR kód knihovna se nenačetla. Zkuste obnovit stránku.</p>';
-                return;
-            }
-
-            QRCode.toCanvas(canvas, qrData, {
-                width: 300,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
-            }, (error) => {
-                if (error) {
-                    console.error('QR Code generation error:', error);
-                    canvas.parentElement.innerHTML = '<p class="text-red-600">Nepodařilo se vygenerovat QR kód: ' + error.message + '</p>';
-                } else {
-                    console.log('QR Code generated successfully!');
-                }
-            });
-        }
-    </script>
 </x-app-layout>
