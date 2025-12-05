@@ -56,8 +56,8 @@
                     </p>
                     <p>
                         <strong>Email:</strong><br>
-                        <a href="mailto:timechip.cz@gmail.com" class="hover:text-white transition-colors">
-                            timechip.cz@gmail.com
+                        <a href="mailto:info@timechip.cz" class="hover:text-white transition-colors">
+                            info@timechip.cz
                         </a>
                     </p>
                 </div>

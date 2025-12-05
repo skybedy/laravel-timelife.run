@@ -49,4 +49,8 @@ return [
         'redirect' => env("APP_URL").'/auth/strava/callback',
     ],
 
+    'google_analytics' => [
+        'id' => env('GOOGLE_ANALYTICS_ID'),
+    ],
+
 ];
