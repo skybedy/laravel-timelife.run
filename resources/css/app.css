@@ -93,3 +93,15 @@ background: #0d45a5;
     @apply text-white  text-center bg-red-500 border-2 border-black;
   }
 
+  .info-box {
+    @apply flex flex-col items-center justify-center text-xl md:text-2xl text-white  gap-1 bg-transparent border-2 border-white rounded-xl px-1 py-2 xs:px-2 sm:px-4 sm:py-3;
+  }
+
+  .info-box > div:first-child {
+    @apply flex items-center gap-2 pb-1 border-b border-white;
+  }
+
+  .info-box > div:last-child {
+    @apply font-extrabold sm:pt-1 text-3xl ;
+  }
+
