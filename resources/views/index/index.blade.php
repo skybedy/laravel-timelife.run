@@ -157,51 +157,6 @@
                                     </div>
 
 
-                                    <!-- Stripe platba s dynamickou částkou -->
-                                    <div class="col-span-1 md:col-span-2 lg:col-span-3 bg-transparent border-2 border-white rounded-xl px-4 sm:px-8 py-6">
-                                        <form action="{{ route('registration.checkout.dynamic') }}" method="POST" class="w-full">
-                                            @csrf
-                                            <input type="hidden" name="event_id" value="10">
-                                            <input type="hidden" name="payment_recipient" value="3">
-
-                                            <div class="flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-4 xl:gap-8">
-                                                <!-- Ikona + Label -->
-                                                <div class="flex items-center gap-2 sm:gap-4">
-                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-10 xl:w-12 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                                                    </svg>
-                                                    <label class="text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl text-white font-bold whitespace-nowrap">Podpořit:</label>
-                                                </div>
-
-                                                <!-- Input -->
-                                                <input
-                                                    type="number"
-                                                    name="amount"
-                                                    min="10"
-                                                    step="1"
-                                                    placeholder="Částka v Kč"
-                                                    required
-                                                    class="w-full lg:w-56 xl:w-80 px-4 sm:px-8 lg:px-6 xl:px-8 py-3 sm:py-4 rounded-lg text-gray-900 font-bold text-xl sm:text-2xl focus:outline-none focus:ring-2 focus:ring-white"
-                                                >
-
-                                                <!-- via Stripe -->
-                                                <div class="flex items-center gap-2 sm:gap-4">
-                                                    <span class="text-white text-base sm:text-lg lg:text-lg xl:text-xl">via</span>
-                                                    <svg class="h-8 sm:h-10 lg:h-10 xl:h-12" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.76l.08 1.02a4.7 4.7 0 0 1 3.23-1.29c2.9 0 5.62 2.6 5.62 7.4 0 5.23-2.7 7.6-5.65 7.6zM40 8.95c-.95 0-1.54.34-1.97.81l.02 6.12c.4.44.98.78 1.95.78 1.52 0 2.54-1.65 2.54-3.87 0-2.15-1.04-3.84-2.54-3.84zM28.24 5.57h4.13v14.44h-4.13V5.57zm0-4.7L32.37 0v3.36l-4.13.88V.88zm-4.32 9.35v9.79H19.8V5.57h3.7l.12 1.22c1-1.77 3.07-1.41 3.62-1.22v3.79c-.52-.17-2.29-.43-3.32.86zm-8.55 4.72c0 2.43 2.6 1.68 3.12 1.46v3.36c-.55.3-1.54.54-2.89.54a4.15 4.15 0 0 1-4.27-4.24l.01-13.17 4.02-.86v3.54h3.14V9.1h-3.13v5.85zm-4.91.7c0 2.97-2.31 4.66-5.73 4.66a11.2 11.2 0 0 1-4.46-.93v-3.93c1.38.75 3.10 1.31 4.46 1.31.92 0 1.53-.24 1.53-1C6.26 13.77 0 14.51 0 9.95 0 7.04 2.28 5.3 5.62 5.3c1.36 0 2.72.2 4.09.75v3.88a9.23 9.23 0 0 0-4.1-1.06c-.86 0-1.44.25-1.44.9 0 1.85 6.29.97 6.29 5.88z" fill="#fff"/>
-                                                    </svg>
-                                                </div>
-
-                                                <!-- Tlačítko -->
-                                                <button
-                                                    type="submit"
-                                                    class="w-full lg:w-auto bg-white text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-colors text-xl sm:text-2xl lg:text-xl xl:text-2xl px-6 sm:px-10 lg:px-6 xl:px-10 py-3 sm:py-4 whitespace-nowrap"
-                                                >
-                                                    Zaplatit kartou
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
 
                                 </div>
                             </div>
@@ -209,70 +164,81 @@
                         </div>
 
                     </div>
-        
 
-                <!-- Tabulka s výsledky -->
-                <div id="vysledky" class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-8 mb-8 p-8">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Výsledky</h2>
+                    <!-- Box s platbou -->
+                    <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
 
-                    <div class="overflow-auto">
-                        <!-- Desktop tabulka -->
-                        <table id="result_table" class="hidden md:table table-auto border-collapse w-full">
-                            <thead>
-                                <tr class="bg-gray-700 text-white">
-                                    <th class="border-none text-center px-4 py-3">Datum</th>
-                                    <th class="border-none text-center px-4 py-3">Místo/Mapa</th>
-                                    <th class="border-none text-center px-4 py-3">Tempo</th>
-                                    <th class="border-none text-center px-4 py-3">Čas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($results as $result)
-                                    <tr class="odd:bg-gray-100 even:bg-white hover:bg-gray-200 transition-colors" id="result_{{ $result->id }}">
-                                        <td class="border text-center px-4 py-3">{{ $result->date }}</td>
-                                        <td class="border px-4 py-3">
-                                            <a class="result_map flex justify-center" href="{{ route('result.map',$result->id) }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="red" class="w-6 h-6">
-                                                    <path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" />
-                                                </svg>
-                                            </a>
-                                        </td>
-                                        <td class="border text-center px-4 py-3">{{ $result->pace_km }}</td>
-                                        <td class="border text-center px-4 py-3 font-semibold">{{ $result->finish_time }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <!-- Šedý box s textem a formulářem -->
+                        <div class="bg-gray-700 rounded-2xl p-6 sm:p-8">
 
-                        <!-- Mobile tabulka -->
-                        <table id="result_table_sm" class="md:hidden table-auto border-collapse w-full text-sm">
-                            <thead>
-                                <tr class="bg-gray-700 text-white">
-                                    <th class="border-none text-center px-2 py-2">Datum</th>
-                                    <th class="border-none text-center px-2 py-2">Map</th>
-                                    <th class="border-none text-center px-2 py-2">Tempo</th>
-                                    <th class="border-none text-center px-2 py-2">Čas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($results as $result)
-                                    <tr class="odd:bg-gray-100 even:bg-white" id="result_{{ $result->id }}">
-                                        <td class="border text-center px-2 py-2">{{ $result->date }}</td>
-                                        <td class="border px-2 py-2">
-                                            <a class="result_map flex justify-center" href="{{ route('result.map', $result->id) }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="red" class="w-6 h-6">
-                                                    <path fill-rule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clip-rule="evenodd" />
-                                                </svg>
-                                            </a>
-                                        </td>
-                                        <td class="border text-center px-2 py-2">{{ $result->pace_km }}</td>
-                                        <td class="border text-center px-2 py-2">{{ $result->finish_time }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                            <!-- Motivační text -->
+                            <div class="text-white text-lg sm:text-xl leading-relaxed mb-6 space-y-4">
+                                <p class="flex items-start gap-3">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7 text-red-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span>I ta nejmenší částka má svůj dopad, naše běžecká komunita jen ve FB skupině Běžci běžcům čítá téměř 70 000 lidí a pokud by jen 1,5 % z nás věnovalo zcela zanedbatelných 50 Kč, Jitka vybere prostřednictvím tohoto kanálu 52 500 Kč na věc, jejíž existenci si pravděpodobně většina z nás nebude chtít ani představit.</span>
+                                </p>
+
+                                <!-- Oddělení mezi odstavci -->
+                                <div class="border-t border-white/20 my-4"></div>
+
+                                <p class="flex items-start gap-3">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    <span>Kromě nezbytných poplatků platebnímu operátorovi jdou veškeré prostředky přímo na účet <strong>2101782768/2010</strong> organizace Dům pro Julii, a jak hlavní protagonistka Jitka Dvořáčková, tak provozovatel této webové stránky si z ní nenechávají ani haléř.</span>
+                                </p>
+                            </div>
+
+                            <!-- Oddělení -->
+                            <div class="border-t border-white/30 my-6"></div>
+
+                            <!-- Platební formulář -->
+                            <form action="{{ route('registration.checkout.dynamic') }}" method="POST" class="w-full">
+                                @csrf
+                                <input type="hidden" name="event_id" value="10">
+                                <input type="hidden" name="payment_recipient" value="3">
+
+                                <div class="flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-4 xl:gap-8">
+                                    <!-- Ikona + Label -->
+                                    <div class="flex items-center gap-2 sm:gap-4">
+                                        <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-10 xl:w-12 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                        </svg>
+                                        <label class="text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl text-white font-bold whitespace-nowrap">Podpořit:</label>
+                                    </div>
+
+                                    <!-- Input -->
+                                    <input
+                                        type="number"
+                                        name="amount"
+                                        min="10"
+                                        step="1"
+                                        placeholder="Částka v Kč"
+                                        required
+                                        class="w-full lg:w-56 xl:w-80 px-4 sm:px-8 lg:px-6 xl:px-8 py-3 sm:py-4 rounded-lg text-gray-900 font-bold text-xl sm:text-2xl focus:outline-none focus:ring-2 focus:ring-white"
+                                    >
+
+                                    <!-- via Stripe -->
+                                    <div class="flex items-center gap-2 sm:gap-4">
+                                        <span class="text-white text-base sm:text-lg lg:text-lg xl:text-xl">via</span>
+                                        <svg class="h-8 sm:h-10 lg:h-10 xl:h-12" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.76l.08 1.02a4.7 4.7 0 0 1 3.23-1.29c2.9 0 5.62 2.6 5.62 7.4 0 5.23-2.7 7.6-5.65 7.6zM40 8.95c-.95 0-1.54.34-1.97.81l.02 6.12c.4.44.98.78 1.95.78 1.52 0 2.54-1.65 2.54-3.87 0-2.15-1.04-3.84-2.54-3.84zM28.24 5.57h4.13v14.44h-4.13V5.57zm0-4.7L32.37 0v3.36l-4.13.88V.88zm-4.32 9.35v9.79H19.8V5.57h3.7l.12 1.22c1-1.77 3.07-1.41 3.62-1.22v3.79c-.52-.17-2.29-.43-3.32.86zm-8.55 4.72c0 2.43 2.6 1.68 3.12 1.46v3.36c-.55.3-1.54.54-2.89.54a4.15 4.15 0 0 1-4.27-4.24l.01-13.17 4.02-.86v3.54h3.14V9.1h-3.13v5.85zm-4.91.7c0 2.97-2.31 4.66-5.73 4.66a11.2 11.2 0 0 1-4.46-.93v-3.93c1.38.75 3.10 1.31 4.46 1.31.92 0 1.53-.24 1.53-1C6.26 13.77 0 14.51 0 9.95 0 7.04 2.28 5.3 5.62 5.3c1.36 0 2.72.2 4.09.75v3.88a9.23 9.23 0 0 0-4.1-1.06c-.86 0-1.44.25-1.44.9 0 1.85 6.29.97 6.29 5.88z" fill="#fff"/>
+                                        </svg>
+                                    </div>
+
+                                    <!-- Tlačítko -->
+                                    <button
+                                        type="submit"
+                                        class="w-full lg:w-auto bg-white text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-colors text-xl sm:text-2xl lg:text-xl xl:text-2xl px-6 sm:px-10 lg:px-6 xl:px-10 py-3 sm:py-4 whitespace-nowrap"
+                                    >
+                                        Zaplatit kartou
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
 
         </div>
     </div>

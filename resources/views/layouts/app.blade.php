@@ -87,6 +87,9 @@ input[type=file]::file-selector-button:hover {
 
                 {{ $slot }}
             </main>
+
+            <!-- Footer -->
+            @include('layouts.footer')
         </div>
 
     </body>

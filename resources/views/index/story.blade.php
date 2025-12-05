@@ -7,13 +7,26 @@
             <!-- Hlavní content box -->
             <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-6 sm:p-8 md:p-12">
 
-                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-8 text-center">
-                    🏃‍♀️ Běžím 100 půlmaratonů za 100 dní: Zviditelňuji neviditelné hrdiny
-                </h1>
+                <div class="flex items-center justify-center gap-4 mb-8">
+                    <svg class="w-12 h-12 sm:w-16 sm:h-16 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 text-center">
+                        Běžím 100 půlmaratonů za 100 dní: Zviditelňuji neviditelné hrdiny
+                    </h1>
+                    <svg class="w-12 h-12 sm:w-16 sm:h-16 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
 
                 <div class="prose prose-lg max-w-none text-gray-700">
 
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-10 mb-6">Zrod běžkyně s posláním</h2>
+                    <div class="flex items-center gap-3 mt-10 mb-6">
+                        <svg class="w-8 h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 m-0">Zrod běžkyně s posláním</h2>
+                    </div>
 
                     <p class="text-lg leading-relaxed mb-6">
                         Moje sportovní cesta začala až v roce 2020. Uzavření světa, stres a možná i trochu nudy mě dovedly k běhu. V nejlevnějších botách z Decathlonu jsem vyrazila do Stromovky a stalo se něco nečekaného: <strong>běh mě pohltil</strong>. Netrvalo dlouho a zvládala jsem 5, 10, 21 km...
@@ -25,7 +38,12 @@
 
                     <hr class="my-10 border-gray-300">
 
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-10 mb-6">Pro koho to všechno dělám?</h2>
+                    <div class="flex items-center gap-3 mt-10 mb-6">
+                        <svg class="w-8 h-8 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        </svg>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 m-0">Pro koho to všechno dělám?</h2>
+                    </div>
 
                     <p class="text-lg leading-relaxed mb-6">
                         Běhám pro ty, jejichž statečnost zůstává skrytá a o nichž se nemluví: <strong>pro pečující osoby</strong>.
@@ -54,7 +72,12 @@
 
                     <hr class="my-10 border-gray-300">
 
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-10 mb-6">🏠 Dům pro Julii: Místo úlevy a komplexní péče</h2>
+                    <div class="flex items-center gap-3 mt-10 mb-6">
+                        <svg class="w-8 h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 m-0">Dům pro Julii: Místo úlevy a komplexní péče</h2>
+                    </div>
 
                     <p class="text-lg leading-relaxed mb-6">
                         Svou sbírkou a běžeckou výzvou podporuji unikátní projekt: <strong>Dětský lůžkový hospic Dům pro Julii</strong> v Brně. V České republice dosud chyběla specializovaná lůžková péče, která by rodinám pečujícím o nevyléčitelně nemocné děti poskytla komplexní podporu a odpočinek.
@@ -95,7 +118,12 @@
 
                     <hr class="my-10 border-gray-300">
 
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-10 mb-6">Jak můžete pomoci i vy</h2>
+                    <div class="flex items-center gap-3 mt-10 mb-6">
+                        <svg class="w-8 h-8 text-orange-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                        </svg>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 m-0">Jak můžete pomoci i vy</h2>
+                    </div>
 
                     <p class="text-lg leading-relaxed mb-6">
                         Podpořte i Vy unikátní dětský hospic, který dává pečujícím rodinám možnost nadechnout se.
@@ -119,11 +147,11 @@
                     </p>
 
                     <div class="mt-12 text-center">
-                        <a href="/" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl mb-4">
+                        <a href="{{ route('index') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl mb-4">
                             Podpořit Dům pro Julii
                         </a>
                         <p class="text-gray-600 mt-4">nebo</p>
-                        <a href="/#vysledky" class="inline-block text-blue-600 hover:text-blue-800 font-semibold text-lg mt-4">
+                        <a href="{{ route('results-jitka.index') }}" class="inline-block text-blue-600 hover:text-blue-800 font-semibold text-lg mt-4">
                             Zobrazit výsledky běhů →
                         </a>
                     </div>

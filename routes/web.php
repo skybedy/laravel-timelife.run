@@ -7,6 +7,7 @@ use App\Http\Controllers\IndexController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ResultController;
+use App\Http\Controllers\ResultsJitkaController;
 use App\Http\Controllers\StravaController;
 use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\AboutController;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 Route::get('/story', [IndexController::class, 'story'])->name('story');
+Route::get('/results-jitka', [ResultsJitkaController::class, 'index'])->name('results-jitka.index');
 Route::get('/how-it-works', [HowItWorksController::class, 'index'])->name('how_it_works.index');
 Route::get('/redirect-strava/{userId}', [StravaController::class, 'redirectStrava'])->name('redirect_strava');
 // Strava webhooks přesunuty do routes/webhooks.php (GET/POST /webhook)

@@ -21,7 +21,7 @@
                         {{ __('Příběh') }}
                     </x-nav-link>
 
-                    <x-nav-link href="#vysledky" class="text-lg lg:text-xl text-gray-600">
+                    <x-nav-link :href="route('results-jitka.index')" :active="request()->routeIs('results-jitka.index')" class="text-lg lg:text-xl text-gray-600">
                         {{ __('Výsledky') }}
                     </x-nav-link>
                 </div>

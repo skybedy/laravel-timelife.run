@@ -18,11 +18,8 @@ use Illuminate\Support\Facades\DB;
 
 class IndexController extends Controller
 {
-    public function index(Request $request, Event $event, Result $result)
+    public function index(Request $request, Event $event)
     {
-
-        $results = $result->resultsIndividual(131);
-
         // Statistiky pro registration_id 131
         $stats = DB::table('results')
             ->where('registration_id', 131)
@@ -56,7 +53,6 @@ class IndexController extends Controller
         if ($request->user() == null) {
             return view('index.index', [
                 'events' => $event::where('platform_id', env('PLATFORM',3))->where('display', 1)->get(),
-                'results' => $results,
                 'totalRaces' => $stats->total_count ?? 0,
                 'totalKm' => $totalKm,
                 'totalTime' => $totalTime ?? '0:00:00',
@@ -68,7 +64,6 @@ class IndexController extends Controller
             return view('index/index', [
                 //'events' => $event->eventList($request->user()->id),
                 'events' => $event::where('platform_id', env('PLATFORM',3))->where('display', 1)->get(), // pri pouziti predchoziho prikazu se to vypisovalo trikrat, ted to neresim
-                 'results' => $results,
                 'totalRaces' => $stats->total_count ?? 0,
                 'totalKm' => $totalKm,
                 'totalTime' => $totalTime ?? '0:00:00',
