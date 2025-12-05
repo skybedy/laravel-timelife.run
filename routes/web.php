@@ -40,6 +40,11 @@ Route::post('/registration/create/checkout/dynamic', [RegistrationController::cl
 Route::get('/registration/create/checkout/success', [RegistrationController::class, 'success'])->name('payment.success');
 Route::get('/registration/create/checkout/cancel', [RegistrationController::class, 'cancel'])->name('payment.cancel');
 
+// Stripe Elements routes
+Route::get('/registration/create/checkout-elements/{event_id}/{payment_recipient}', [RegistrationController::class, 'checkoutElementsForm'])->name('registration.checkout.elements.form');
+Route::post('/registration/create/payment-intent', [RegistrationController::class, 'createPaymentIntent'])->name('registration.payment-intent.create');
+Route::post('/registration/confirm-payment', [RegistrationController::class, 'confirmPayment'])->name('registration.payment.confirm');
+
 
 
 Route::middleware(['auth','checkUserSerieRegistered'])->group(function () {

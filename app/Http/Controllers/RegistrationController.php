@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Registration;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
 use Stripe\Checkout\Session;
@@ -207,6 +208,19 @@ class RegistrationController extends Controller
             $this->createPayment($checkout_session);
         }
 
+        // Handle Payment Intent succeeded (for Stripe Elements)
+        if ($event->type == 'payment_intent.succeeded') {
+            $paymentIntent = $event->data->object;
+
+            Log::info('✓ Webhook: payment_intent.succeeded', [
+                'payment_intent_id' => $paymentIntent->id,
+                'amount' => $paymentIntent->amount,
+                'currency' => $paymentIntent->currency,
+            ]);
+
+            $this->createPaymentFromIntent($paymentIntent);
+        }
+
         if ($event->type == 'payout.paid') {
             $payout = $event->data->object;
 
@@ -338,6 +352,145 @@ class RegistrationController extends Controller
     public function cancel()
     {
         return redirect()->route('index')->with('error', 'Platba byla zrušena');
+    }
+
+    /**
+     * Zobrazí formulář s Stripe Elements pro platbu
+     */
+    public function checkoutElementsForm($event_id, $payment_recipient)
+    {
+        $event = Event::find($event_id);
+        $paymentRecipient = PaymentRecepient::find($payment_recipient);
+
+        return view('registrations.checkout_elements', [
+            'event' => $event,
+            'paymentRecipient' => $paymentRecipient,
+            'stripeKey' => env('STRIPE_KEY'),
+        ]);
+    }
+
+    /**
+     * Vytvoří Payment Intent pro Stripe Elements
+     */
+    public function createPaymentIntent(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:10|max:1000000',
+            'event_id' => 'required|integer',
+            'payment_recipient_id' => 'required|integer',
+            'donor_email' => 'nullable|email',
+            'donor_name' => 'nullable|string|max:255',
+        ]);
+
+        $stripe = app(StripeClient::class);
+        $paymentRecipient = PaymentRecepient::find($request->payment_recipient_id);
+
+        // Částka v haléřích (Stripe používá minor units)
+        $amountInCents = $request->amount * 100;
+
+        try {
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => $amountInCents,
+                'currency' => 'czk',
+                'automatic_payment_methods' => [
+                    'enabled' => true,
+                ],
+                'transfer_data' => [
+                    'destination' => $paymentRecipient->stripe_client_id,
+                ],
+                'statement_descriptor' => 'LIFERUN.CZ JDVORACKO',
+                'metadata' => [
+                    'event_id' => $request->event_id,
+                    'payment_recipient_id' => $request->payment_recipient_id,
+                    'amount' => $amountInCents,
+                    'donor_email' => $request->donor_email,
+                    'donor_name' => $request->donor_name,
+                ],
+            ]);
+
+            return response()->json([
+                'clientSecret' => $paymentIntent->client_secret,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Potvrdí úspěšnou platbu a uloží ji do databáze
+     */
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'payment_intent_id' => 'required|string',
+        ]);
+
+        try {
+            $stripe = app(StripeClient::class);
+            $paymentIntent = $stripe->paymentIntents->retrieve($request->payment_intent_id);
+
+            // Zkontroluj, jestli platba proběhla úspěšně
+            if ($paymentIntent->status === 'succeeded') {
+                // Zkontroluj, jestli už neexistuje záznam
+                if (!Payment::where('stripe_payment_intent_id', $paymentIntent->id)->exists()) {
+                    $payment = new Payment();
+                    $payment->user_id = null;
+                    $payment->donor_email = $paymentIntent->metadata->donor_email ?? null;
+                    $payment->donor_name = $paymentIntent->metadata->donor_name ?? null;
+                    $payment->event_id = $paymentIntent->metadata->event_id;
+                    $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
+                    $payment->amount = $paymentIntent->metadata->amount / 100;
+                    $payment->stripe_session_id = null; // Elements nepoužívá session
+                    $payment->stripe_payment_intent_id = $paymentIntent->id;
+                    $payment->save();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Platba byla úspěšně zpracována'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Platba nebyla dokončena'
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Vytvoří záznam o platbě z Payment Intent (webhook handler)
+     */
+    private function createPaymentFromIntent($paymentIntent)
+    {
+        // Prevents duplicate payments
+        if (Payment::where('stripe_payment_intent_id', $paymentIntent->id)->exists()) {
+            Log::info('Payment already exists for payment_intent: ' . $paymentIntent->id);
+            return;
+        }
+
+        $payment = new Payment();
+        $payment->user_id = null;
+        $payment->donor_email = $paymentIntent->metadata->donor_email ?? null;
+        $payment->donor_name = $paymentIntent->metadata->donor_name ?? null;
+        $payment->event_id = $paymentIntent->metadata->event_id;
+        $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
+        $payment->amount = $paymentIntent->metadata->amount / 100; // Convert from minor units
+        $payment->stripe_session_id = null; // Elements doesn't use checkout session
+        $payment->stripe_payment_intent_id = $paymentIntent->id;
+        $payment->save();
+
+        Log::info('Payment created from Payment Intent', [
+            'payment_id' => $payment->id,
+            'amount' => $payment->amount,
+            'donor_email' => $payment->donor_email,
+        ]);
     }
 
 
