@@ -493,6 +493,21 @@ class RegistrationController extends Controller
         ]);
     }
 
+    /**
+     * Zobrazí stránku pro výběr platební metody
+     */
+    public function paymentSelection(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:50|max:1000000',
+        ]);
+
+        return view('donations.payment-selection', [
+            'amount' => $request->amount,
+            'stripeKey' => env('STRIPE_KEY'),
+        ]);
+    }
+
 
 
 

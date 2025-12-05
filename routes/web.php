@@ -45,6 +45,9 @@ Route::get('/registration/create/checkout-elements/{event_id}/{payment_recipient
 Route::post('/registration/create/payment-intent', [RegistrationController::class, 'createPaymentIntent'])->name('registration.payment-intent.create');
 Route::post('/registration/confirm-payment', [RegistrationController::class, 'confirmPayment'])->name('registration.payment.confirm');
 
+// Donation payment selection page
+Route::get('/donation/payment-selection', [RegistrationController::class, 'paymentSelection'])->name('donation.payment-selection');
+
 
 
 Route::middleware(['auth','checkUserSerieRegistered'])->group(function () {
