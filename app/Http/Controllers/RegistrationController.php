@@ -267,7 +267,7 @@ class RegistrationController extends Controller
             'payment_intent_data' => [
                 'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
                 'setup_future_usage' => 'on_session',
-                'statement_descriptor' => 'TIMELIFE JITKA',
+                'statement_descriptor' => 'LIFERUN.CZ JDVORACKOVA',
             ],
         ]);
 

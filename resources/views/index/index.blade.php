@@ -177,7 +177,7 @@
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7 text-red-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>I ta nejmenší částka má svůj dopad, naše běžecká komunita jen ve FB skupině Běžci běžcům čítá téměř 70 000 lidí a pokud by jen 1,5 % z nás věnovalo zcela zanedbatelných 50 Kč, Jitka vybere prostřednictvím tohoto kanálu 52 500 Kč na věc, jejíž existenci si pravděpodobně většina z nás nebude chtít ani představit.</span>
+                                    <span>I ta nejmenší částka má svůj dopad, naše běžecká komunita jen ve FB skupině Běžci běžcům čítá téměř 70.000 lidí a pokud by jen cca 2% z nás věnovalo zcela zanedbatelných 50Kč, Jitka vybere prostřednictvím tohoto kanálu okolo 50.000 Kč na věc, jejíž existenci si pravděpodobně většina z nás nechce ani příliš představovat.</span>
                                 </p>
 
                                 <!-- Oddělení mezi odstavci -->
