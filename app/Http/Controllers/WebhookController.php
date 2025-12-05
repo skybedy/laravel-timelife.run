@@ -108,7 +108,7 @@ class WebhookController extends Controller
         //}
     }
 
-    public function postStrava(Request $request)
+    public function postStrava(Request $request, ResultService $resultService)
     {
 
         \Log::info('Webhook event received!', [
@@ -116,47 +116,119 @@ class WebhookController extends Controller
             'body' => $request->all(),
         ]);
 
-        //$expiresAt = User::where(
-        $stravaId = $request->input('owner_id');
-        //$expiresAt = User::where('strava_id','=',$input)->value('expires_at');
-        $user = User::select('id', 'strava_access_token', 'strava_refresh_token', 'strava_expires_at')->where('strava_id', $stravaId)->first();
+        try {
+            // Get activity stream data from Strava
+            $activityData = $resultService->getStreamFromStrava($request);
 
-        if ($user->strava_expires_at > time()) {
+            if (!$activityData) {
+                \Log::error('Failed to fetch activity data from Strava', [
+                    'activity_id' => $request->input('object_id'),
+                    'owner_id' => $request->input('owner_id'),
+                ]);
+                return response()->json(['error' => 'Failed to fetch activity data'], 500);
+            }
 
-            $url = 'https://www.strava.com/api/v3/activities/'.$request->input('object_id').'?include_all_efforts=true';
-            $token = $user->strava_access_token;
-            $response = Http::withToken($token)->get($url);
-            $data = $response->json();
+            // Check if activity has required stream data
+            if (!isset($activityData['latlng']['data']) || empty($activityData['latlng']['data'])) {
+                \Log::info('Activity has no GPS data (indoor activity?)', [
+                    'activity_id' => $request->input('object_id'),
+                    'type' => $activityData['type'] ?? 'unknown',
+                ]);
+                return response()->json(['message' => 'Activity has no GPS data, skipping'], 200);
+            }
 
-        } else {
-            $response = Http::post('https://www.strava.com/oauth/token', [
-                'client_id' => '117954',
-                'client_secret' => 'a56df3b8bb06067ebe76c7d23af8ee8211d11381',
-                'refresh_token' => $user->strava_refresh_token,
-                'grant_type' => 'refresh_token',
+            $userId = $activityData['user_id'];
+
+            // Get user's registration (you may need to adjust this logic based on your business rules)
+            $registration = Registration::where('user_id', $userId)
+                ->whereHas('event', function($query) use ($activityData) {
+                    $activityDate = date('Y-m-d', strtotime($activityData['start_date']));
+                    $query->where('date_start', '<=', $activityDate)
+                          ->where('date_end', '>=', $activityDate);
+                })
+                ->first();
+
+            if (!$registration) {
+                \Log::info('No matching registration found for activity', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                ]);
+                return response()->json(['message' => 'No matching registration found'], 200);
+            }
+
+            // Process the activity data
+            $finishTime = $resultService->getActivityFinishDataFromStravaWebhook($activityData, $registration, $userId);
+
+            // Save result to database
+            $result = new Result();
+            $result->registration_id = $finishTime['registration_id'];
+            $result->finish_time_date = $finishTime['finish_time_date'];
+            $result->finish_time = $finishTime['finish_time'];
+            $result->pace = $finishTime['pace'];
+            $result->finish_time_sec = $finishTime['finish_time_sec'];
+            $result->place = null; // Will be calculated later
+
+            DB::beginTransaction();
+
+            try {
+                $result->save();
+
+                // Add result_id to track points
+                for ($i = 0; $i < count($finishTime['track_points']); $i++) {
+                    $finishTime['track_points'][$i]['result_id'] = $result->id;
+                }
+
+                // Insert track points
+                TrackPoint::insert($finishTime['track_points']);
+
+                // Update finish_time_order for all results of this registration
+                $results = Result::where('registration_id', $finishTime['registration_id'])
+                    ->orderBy('finish_time', 'asc')
+                    ->get();
+
+                foreach ($results as $key => $value) {
+                    Result::where('id', $value->id)->update(['finish_time_order' => $key + 1]);
+                }
+
+                DB::commit();
+
+                \Log::info('Activity processed and saved successfully', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                    'result_id' => $result->id,
+                    'finish_time' => $finishTime['finish_time'],
+                ]);
+
+                return response()->json(['message' => 'Activity processed successfully'], 200);
+
+            } catch (UniqueConstraintViolationException $e) {
+                DB::rollback();
+                \Log::warning('Duplicate track point time detected', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                return response()->json(['error' => 'Duplicate time data in activity'], 409);
+            } catch (QueryException $e) {
+                DB::rollback();
+                \Log::error('Database error while saving result', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                return response()->json(['error' => 'Database error'], 500);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error processing Strava webhook', [
+                'activity_id' => $request->input('object_id'),
+                'owner_id' => $request->input('owner_id'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            $body = $response->body();
-            $content = json_decode($body, true);
-
-            $user1 = User::where('id', $user->id)->first();
-            $user1->strava_access_token = $content['access_token'];
-            $user1->strava_refresh_token = $content['refresh_token'];
-            $user1->strava_expires_at = $content['expires_at'];
-
-            $user1->save();
-
-            $url = 'https://www.strava.com/api/v3/activities/'.$request->input('object_id').'?include_all_efforts=true';
-            $token = $user->strava_access_token;
-            $response = Http::withToken($token)->get($url);
-            $data = $content;
-
-            $data = $user1;
-            $data .= 'tady jsem';
-
+            return response()->json(['error' => 'Internal server error'], 500);
         }
-
-        return response($data, 200);
     }
 
     /*
