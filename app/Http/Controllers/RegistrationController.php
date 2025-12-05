@@ -508,6 +508,56 @@ class RegistrationController extends Controller
         ]);
     }
 
+    /**
+     * Stránka pro platbu kartou
+     */
+    public function payWithCard(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:50|max:1000000',
+        ]);
+
+        return view('donations.pay-card', [
+            'amount' => $request->amount,
+            'donorName' => $request->donor_name,
+            'donorEmail' => $request->donor_email,
+            'stripeKey' => env('STRIPE_KEY'),
+        ]);
+    }
+
+    /**
+     * Stránka pro platbu přes Google Pay
+     */
+    public function payWithGooglePay(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:50|max:1000000',
+        ]);
+
+        return view('donations.pay-googlepay', [
+            'amount' => $request->amount,
+            'donorName' => $request->donor_name,
+            'donorEmail' => $request->donor_email,
+            'stripeKey' => env('STRIPE_KEY'),
+        ]);
+    }
+
+    /**
+     * Stránka s QR kódem pro bankovní převod
+     */
+    public function payWithQR(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:50|max:1000000',
+        ]);
+
+        return view('donations.pay-qr', [
+            'amount' => $request->amount,
+            'donorName' => $request->donor_name,
+            'donorEmail' => $request->donor_email,
+        ]);
+    }
+
 
 
 

@@ -48,6 +48,11 @@ Route::post('/registration/confirm-payment', [RegistrationController::class, 'co
 // Donation payment selection page
 Route::get('/donation/payment-selection', [RegistrationController::class, 'paymentSelection'])->name('donation.payment-selection');
 
+// Donation payment method pages
+Route::get('/donation/pay-card', [RegistrationController::class, 'payWithCard'])->name('donation.pay-card');
+Route::get('/donation/pay-googlepay', [RegistrationController::class, 'payWithGooglePay'])->name('donation.pay-googlepay');
+Route::get('/donation/pay-qr', [RegistrationController::class, 'payWithQR'])->name('donation.pay-qr');
+
 
 
 Route::middleware(['auth','checkUserSerieRegistered'])->group(function () {
