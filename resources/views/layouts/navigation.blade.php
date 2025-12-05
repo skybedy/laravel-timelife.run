@@ -1,14 +1,14 @@
 
-<nav x-data="{ open: false }" class="border-b border-orange-400 bg-[#fefdf9] py-4">
+<nav x-data="{ open: false }" class="border-b border-red-400 bg-[#fefdf9] py-4">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
         <div class="flex justify-between h-16">
 
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center flex-1">
+                <div class="shrink-0 gap-3 flex items-center flex-1">
                     <a href="{{ route('index') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-80"  width="70px" height="70px" />
+                         <img src="{{ asset('images/app-logo.png') }}" width="70px" height="70px" />
                     </a>
                     <div class="pt-1">
                         <div class="indie-flower-regular text-3xl sm:text-4xl">LifeRun</div>

@@ -249,8 +249,8 @@ class RegistrationController extends Controller
                     'currency' => 'czk',
                     'unit_amount' => $request->amount * 100, // částka v haléřích
                     'product_data' => [
-                        'name' => 'Příspěvek - 100 půlmaratonů pro Jitku',
-                        'description' => 'Dobrovolný příspěvek na podporu',
+                        'name' => 'Jitka Dvořáčková, 100 půmaratonů za 100 dní',
+                        'description' => 'Vaše platba bude prostřednictvím služby Sripe převedena přímo na účet 2101782768/2010 organizace Dům pro Julii,',
                         'images' => ['https://liferun.cz/images/dum-pro-julii-logo.png'],
                     ],
                 ],
