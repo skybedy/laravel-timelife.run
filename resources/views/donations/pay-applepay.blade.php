@@ -3,8 +3,10 @@
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden sm:rounded-lg border p-8 border-blue-300 shadow-lg">
 
-                <!-- Nadpis -->
-                <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Apple Pay</h2>
+                <!-- Nadpis (Logo) -->
+                <div class="flex items-center justify-center mb-6">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" class="h-12">
+                </div>
                 <p class="text-center text-gray-600 mb-8">
                     Částka: <strong class="text-2xl text-blue-600">{{ $amount }} Kč</strong>
                 </p>
@@ -125,14 +127,27 @@
 
             document.getElementById('loading-message').classList.add('hidden');
 
-            if (result && result.applePay) {
-                console.log('[APPLE PAY] Apple Pay available! Mounting button...');
+            if (result && !result.googlePay) {
+                // Zobrazíme tlačítko, pokud je dostupné cokoliv kromě Google Pay
+                // (To pokryje Apple Pay i případné fallbacky na iOS)
+                console.log('[APPLE PAY] Wallet available. Mounting button...');
                 prButton.mount('#apple-pay-button');
                 console.log('[APPLE PAY] Button mounted successfully!');
-            } else {
-                console.warn('[APPLE PAY] Not available (or not Apple Pay) in this browser');
+            } else if (result && result.googlePay) {
+                // Detekováno Google Pay na stránce Apple Pay
+                console.warn('[APPLE PAY] Google Pay detected instead.');
                 document.getElementById('applepay-errors').innerHTML =
-                    'Apple Pay je dostupné pouze v prohlížeči <strong>Safari</strong> (na iPhone, iPad nebo Mac).<br>V tomto prohlížeči použijte prosím <a href="/donation/pay-card?amount={{ $amount }}&donor_name={{ $donorName ?? '' }}&donor_email={{ $donorEmail ?? '' }}" class="underline font-bold hover:text-red-800">platbu kartou</a>.';
+                    'Detekovali jsme <strong>Google Pay</strong>. Prosím, přejděte na <a href="/donation/pay-googlepay?amount={{ $amount }}&donor_name={{ $donorName ?? '' }}&donor_email={{ $donorEmail ?? '' }}" class="underline font-bold hover:text-blue-800">stránku pro Google Pay</a> nebo použijte platbu kartou.';
+            } else {
+                // Nic není dostupné (prázdný Wallet nebo nepodporovaný prohlížeč)
+                console.warn('[APPLE PAY] Not available in this browser');
+                document.getElementById('applepay-errors').innerHTML =
+                    'Apple Pay není k dispozici. Ujistěte se, že:<br>' +
+                    '<ul class="list-disc list-inside mt-2 mb-2 text-left inline-block">' +
+                    '<li>Máte přidanou kartu v <strong>Apple Wallet</strong>.</li>' +
+                    '<li>Používáte prohlížeč <strong>Safari</strong> (ne Facebook/Instagram prohlížeč).</li>' +
+                    '</ul><br>' +
+                    'Případně použijte <a href="/donation/pay-card?amount={{ $amount }}&donor_name={{ $donorName ?? '' }}&donor_email={{ $donorEmail ?? '' }}" class="underline font-bold hover:text-red-800">platbu kartou</a>.';
             }
 
             // Handle payment
