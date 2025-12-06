@@ -100,7 +100,7 @@
                 country: 'CZ',
                 currency: 'czk',
                 total: {
-                    label: 'Příspěvek pro Jitku Dvořáčkovou',
+                    label: 'Jitka Dvořáčková a 100 půlmaratonů za 100 dní',
                     amount: {{ $amount }} * 100,
                 },
                 requestPayerName: true,

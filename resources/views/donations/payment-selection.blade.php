@@ -9,6 +9,37 @@
                     Vybrali jste částku: <strong class="text-2xl text-blue-600">{{ $amount }} Kč</strong>
                 </p>
 
+                <!-- Formulář pro údaje dárce -->
+                <form id="donor-form" class="mb-8">
+                    <div class="bg-gray-50 rounded-lg p-6 space-y-4">
+                        <h3 class="font-semibold text-lg mb-4">Vaše údaje (volitelné)</h3>
+
+                        <div>
+                            <label for="donor-name" class="block text-sm font-medium text-gray-700 mb-1">Jméno a příjmení</label>
+                            <input
+                                type="text"
+                                id="donor-name"
+                                name="donor_name"
+                                placeholder="Jan Novák"
+                                maxlength="255"
+                                class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="donor-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input
+                                type="email"
+                                id="donor-email"
+                                name="donor_email"
+                                placeholder="jan.novak@example.com"
+                                class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                            <p class="text-xs text-gray-500 mt-1"></p>
+                        </div>
+                    </div>
+                </form>
+
                 <!-- Výběr platební metody -->
                 <div>
                     <h3 class="font-semibold text-lg mb-4 text-center">Vyberte způsob platby</h3>
@@ -62,9 +93,14 @@
         const amount = {{ $amount }};
 
         function selectPaymentMethod(method) {
+            const donorName = document.getElementById('donor-name').value;
+            const donorEmail = document.getElementById('donor-email').value;
+
             // Build query string
             const params = new URLSearchParams({
                 amount: amount,
+                donor_name: donorName,
+                donor_email: donorEmail,
             });
 
             if (method === 'card') {
