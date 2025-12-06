@@ -236,19 +236,34 @@ class RegistrationController extends Controller
 
         return response()->json(['status' => 'success'], 200);
     }
-    public function success()
+    public function success(Request $request, StripeClient $stripe)
     {
-        Log::info('Success method called.');
-        $amount = session('last_donation_amount', null); // Načte částku ze session
-        Log::info('Success method: Amount from session', ['amount' => $amount]);
+        $amount = null;
+
+        try {
+            if ($request->has('payment_intent')) {
+                $paymentIntent = $stripe->paymentIntents->retrieve($request->payment_intent);
+                $amount = $paymentIntent->amount / 100;
+            } elseif ($request->has('session_id')) {
+                $session = $stripe->checkout->sessions->retrieve($request->session_id);
+                $amount = $session->amount_total / 100;
+            }
+        } catch (\Exception $e) {
+            Log::error('Error retrieving payment details in success: ' . $e->getMessage());
+        }
+
+        // Fallback na session, pokud by API selhalo (málo pravděpodobné, ale pro jistotu)
+        if ($amount === null) {
+            $amount = session('last_donation_amount', null);
+        }
+        
+        // Vyčistit session, pokud tam něco zbylo
+        session()->forget('last_donation_amount');
+
         $message = 'Děkuji za příspěvek pro Dům pro Julii.<br>Jitka Dvořáčková.';
 
         if ($amount !== null) {
             $message = 'Děkuji za příspěvek ' . number_format($amount, 0, ',', ' ') . ' Kč pro Dům pro Julii.<br>Jitka Dvořáčková.';
-            session()->forget('last_donation_amount'); // Odstraní částku ze session
-            Log::info('Success method: Amount used and session cleared.', ['final_message' => $message]);
-        } else {
-            Log::warning('Success method: Amount was null, using default message.');
         }
 
         return redirect()->route('index')->with('success', $message);
@@ -324,9 +339,6 @@ class RegistrationController extends Controller
         $payment->amount = $checkout_session->metadata->amount / 100;
         $payment->stripe_session_id = $checkout_session->id;
                 $payment->save();
-        
-                // Uloží částku do session pro zobrazení poděkování
-                session(['last_donation_amount' => $payment->amount]);
     }
 
     private function createPayout($payout)
@@ -495,11 +507,6 @@ class RegistrationController extends Controller
         $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
         $payment->amount = $paymentIntent->metadata->amount / 100; // Convert from minor units
         $payment->save();
-
-        // Uloží částku do session pro zobrazení poděkování
-        session(['last_donation_amount' => $payment->amount]);
-        Log::info('createPaymentFromIntent: Amount stored in session', ['amount' => $payment->amount, 'session_amount' => session('last_donation_amount')]);
-        Log::info('createPayment: Amount stored in session', ['amount' => $payment->amount, 'session_amount' => session('last_donation_amount')]);
 
         Log::info('Payment created from Payment Intent', [
             'payment_id' => $payment->id,
