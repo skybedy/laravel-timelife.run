@@ -53,6 +53,9 @@ Route::get('/donation/pay-card', [RegistrationController::class, 'payWithCard'])
 Route::get('/donation/pay-googlepay', [RegistrationController::class, 'payWithGooglePay'])->name('donation.pay-googlepay');
 Route::get('/donation/pay-applepay', [RegistrationController::class, 'payWithApplePay'])->name('donation.pay-applepay');
 
+// Stripe Connect Payment Intent creation (for testing/demonstration)
+Route::post('/stripe-connect/payment-intent', [RegistrationController::class, 'createConnectPaymentIntent'])->name('stripe.connect.payment-intent.create');
+
 
 
 Route::middleware(['auth','checkUserSerieRegistered'])->group(function () {

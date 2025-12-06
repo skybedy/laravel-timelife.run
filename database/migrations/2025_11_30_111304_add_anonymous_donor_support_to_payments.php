@@ -14,19 +14,30 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             // Změnit user_id na nullable - pro anonymní dárce
             $table->unsignedInteger('user_id')->nullable()->change();
-
-            // Přidat sloupce pro anonymní dárce
-            $table->string('donor_email', 255)->nullable()->after('user_id');
-            $table->string('donor_name', 255)->nullable()->after('donor_email');
-
-            // Přidat payment_reference_id - pro referenci příjemci
-            $table->string('payment_reference_id', 100)->nullable()->after('stripe_session_id')
-                ->comment('Unique ID sent to recipient for donor identification');
-
-            // Indexy pro rychlé vyhledávání
-            $table->index('donor_email');
-            $table->index('payment_reference_id');
         });
+
+        if (!Schema::hasColumn('payments', 'donor_email')) {
+            Schema::table('payments', function (Blueprint $table) {
+                $table->string('donor_email', 255)->nullable()->after('user_id');
+                $table->index('donor_email');
+            });
+        }
+
+        if (!Schema::hasColumn('payments', 'donor_name')) {
+            Schema::table('payments', function (Blueprint $table) {
+                // Pokud donor_email existuje, dáme to za něj, jinak za user_id
+                $after = Schema::hasColumn('payments', 'donor_email') ? 'donor_email' : 'user_id';
+                $table->string('donor_name', 255)->nullable()->after($after);
+            });
+        }
+
+        if (!Schema::hasColumn('payments', 'payment_reference_id')) {
+            Schema::table('payments', function (Blueprint $table) {
+                $table->string('payment_reference_id', 100)->nullable()->after('stripe_session_id')
+                    ->comment('Unique ID sent to recipient for donor identification');
+                $table->index('payment_reference_id');
+            });
+        }
     }
 
     /**
