@@ -11,45 +11,43 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('payouts')) {
-            Schema::create('payouts', function (Blueprint $table) {
-                $table->id();
+        Schema::create('payouts', function (Blueprint $table) {
+            $table->id();
 
-                // Stripe payout ID
-                $table->string('stripe_payout_id', 100)->unique();
+            // Stripe payout ID
+            $table->string('stripe_payout_id', 100)->unique();
 
-                // Příjemce platby (payment_recepients)
-                $table->unsignedInteger('payment_recipient_id');
+            // Příjemce platby (payment_recepients)
+            $table->unsignedInteger('payment_recipient_id');
 
-                // Částka payoutu v haléřích (Stripe posílá v minor units)
-                $table->bigInteger('amount');
+            // Částka payoutu v haléřích (Stripe posílá v minor units)
+            $table->bigInteger('amount');
 
-                // Měna
-                $table->string('currency', 3)->default('czk');
+            // Měna
+            $table->string('currency', 3)->default('czk');
 
-                // Datum kdy peníze dorazí na účet
-                $table->timestamp('arrival_date')->nullable();
+            // Datum kdy peníze dorazí na účet
+            $table->timestamp('arrival_date')->nullable();
 
-                // Status payoutu: paid, pending, in_transit, canceled, failed
-                $table->string('status', 20);
+            // Status payoutu: paid, pending, in_transit, canceled, failed
+            $table->string('status', 20);
 
-                // Typ payoutu: bank_account, card
-                $table->string('type', 20)->nullable();
+            // Typ payoutu: bank_account, card
+            $table->string('type', 20)->nullable();
 
-                // Popis od Stripe
-                $table->text('description')->nullable();
+            // Popis od Stripe
+            $table->text('description')->nullable();
 
-                // Celý JSON response ze Stripe pro debug
-                $table->json('stripe_data')->nullable();
+            // Celý JSON response ze Stripe pro debug
+            $table->json('stripe_data')->nullable();
 
-                $table->timestamps();
+            $table->timestamps();
 
-                // Indexy
-                $table->index('stripe_payout_id');
-                $table->index('payment_recipient_id');
-                $table->index('arrival_date');
-            });
-        }
+            // Indexy
+            $table->index('stripe_payout_id');
+            $table->index('payment_recipient_id');
+            $table->index('arrival_date');
+        });
     }
 
     /**
