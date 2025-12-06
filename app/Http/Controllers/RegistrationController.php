@@ -506,6 +506,7 @@ class RegistrationController extends Controller
         $payment->event_id = $paymentIntent->metadata->event_id;
         $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
         $payment->amount = $paymentIntent->metadata->amount / 100; // Convert from minor units
+        $payment->stripe_payment_intent_id = $paymentIntent->id;
         $payment->save();
 
         Log::info('Payment created from Payment Intent', [
