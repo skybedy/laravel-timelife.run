@@ -11,13 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // 1. Přejmenování amount -> total_amount (pokud je potřeba)
+        if (Schema::hasColumn('payments', 'amount') && !Schema::hasColumn('payments', 'total_amount')) {
+            Schema::table('payments', function (Blueprint $table) {
+                $table->renameColumn('amount', 'total_amount');
+            });
+        }
+
+        // 2. Přidání nových sloupců (pokud neexistují)
         Schema::table('payments', function (Blueprint $table) {
-            // Přejmenování amount na total_amount
-            $table->renameColumn('amount', 'total_amount');
+            if (!Schema::hasColumn('payments', 'payout_amount')) {
+                // Použijeme after total_amount (předpokládáme, že už existuje)
+                $table->unsignedInteger('payout_amount')->nullable()->after('total_amount');
+            }
             
-            // Přidání nových sloupců
-            $table->unsignedInteger('payout_amount')->nullable()->after('total_amount');
-            $table->unsignedInteger('fee_amount')->nullable()->after('payout_amount');
+            if (!Schema::hasColumn('payments', 'fee_amount')) {
+                $table->unsignedInteger('fee_amount')->nullable()->after('total_amount');
+            }
         });
     }
 
