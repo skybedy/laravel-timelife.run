@@ -129,15 +129,10 @@
                 console.log('[APPLE PAY] Apple Pay available! Mounting button...');
                 prButton.mount('#apple-pay-button');
                 console.log('[APPLE PAY] Button mounted successfully!');
-            } else if (result) {
-                 // Fallback - might be Google Pay or Browser Payment, but we are on Apple Pay page
-                 // Show button anyway, as it might be a valid wallet on this device
-                 console.log('[APPLE PAY] Wallet available (maybe not strictly Apple Pay, but compatible). Mounting...');
-                 prButton.mount('#apple-pay-button');
             } else {
-                console.warn('[APPLE PAY] Not available in this browser/environment');
-                document.getElementById('applepay-errors').textContent =
-                    'Apple Pay není k dispozici v tomto prohlížeči. Použijte prosím Safari na macOS/iOS nebo platbu kartou.';
+                console.warn('[APPLE PAY] Not available (or not Apple Pay) in this browser');
+                document.getElementById('applepay-errors').innerHTML =
+                    'Apple Pay je dostupné pouze v prohlížeči <strong>Safari</strong> (na iPhone, iPad nebo Mac).<br>V tomto prohlížeči použijte prosím <a href="/donation/pay-card?amount={{ $amount }}&donor_name={{ $donorName ?? '' }}&donor_email={{ $donorEmail ?? '' }}" class="underline font-bold hover:text-red-800">platbu kartou</a>.';
             }
 
             // Handle payment
