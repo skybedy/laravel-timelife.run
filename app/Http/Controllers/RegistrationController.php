@@ -240,7 +240,7 @@ class RegistrationController extends Controller
     {
         // Vždy redirect na homepage s poděkováním (žádná registrace)
         // Platba bude uložena přes webhook, ne tady
-        return redirect()->route('index')->with('success', 'Děkujeme za váš příspěvek!');
+        return redirect()->route('index')->with('success', 'Děkuji za příspěvek pro Dům pro Julii, Jitka Dvořáčková.');
     }
 
 
