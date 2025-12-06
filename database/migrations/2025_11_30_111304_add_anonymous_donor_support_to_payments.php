@@ -19,7 +19,6 @@ return new class extends Migration
         if (!Schema::hasColumn('payments', 'donor_email')) {
             Schema::table('payments', function (Blueprint $table) {
                 $table->string('donor_email', 255)->nullable()->after('user_id');
-                $table->index('donor_email');
             });
         }
 
@@ -35,7 +34,6 @@ return new class extends Migration
             Schema::table('payments', function (Blueprint $table) {
                 $table->string('payment_reference_id', 100)->nullable()->after('stripe_session_id')
                     ->comment('Unique ID sent to recipient for donor identification');
-                $table->index('payment_reference_id');
             });
         }
     }
