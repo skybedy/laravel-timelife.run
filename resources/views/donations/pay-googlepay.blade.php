@@ -11,7 +11,7 @@
 
                 <!-- Google Pay Button -->
                 <div class="mb-6">
-                    <div id="google-pay-button" class="flex justify-center">
+                    <div id="google-pay-button" style="min-height: 48px; min-width: 200px;">
                         <!-- Google Pay button se zobrazí zde -->
                     </div>
                     <div id="googlepay-errors" class="text-red-600 text-sm mt-4 text-center" role="alert"></div>
@@ -52,7 +52,10 @@
         });
 
         async function initializeGooglePay() {
+            console.log('[GOOGLE PAY] Initializing...');
+
             // Create Payment Intent
+            console.log('[GOOGLE PAY] Creating Payment Intent...');
             const response = await fetch('{{ route('registration.payment-intent.create') }}', {
                 method: 'POST',
                 headers: {
@@ -68,13 +71,17 @@
                 })
             });
 
+            console.log('[GOOGLE PAY] Response status:', response.status);
             const { clientSecret, error } = await response.json();
 
             if (error) {
+                console.error('[GOOGLE PAY] Payment Intent error:', error);
                 showError(error);
                 document.getElementById('loading-message').classList.add('hidden');
                 return;
             }
+
+            console.log('[GOOGLE PAY] Client secret received:', clientSecret ? 'YES' : 'NO');
 
             // Create Elements instance
             const appearance = {
@@ -84,9 +91,11 @@
                 }
             };
 
+            console.log('[GOOGLE PAY] Creating Elements...');
             elements = stripe.elements({ clientSecret, appearance });
 
             // Create Payment Request Button (Google Pay)
+            console.log('[GOOGLE PAY] Creating Payment Request...');
             const paymentRequest = stripe.paymentRequest({
                 country: 'CZ',
                 currency: 'czk',
@@ -98,17 +107,24 @@
                 requestPayerEmail: true,
             });
 
+            console.log('[GOOGLE PAY] Creating Payment Request Button element...');
             const prButton = elements.create('paymentRequestButton', {
                 paymentRequest: paymentRequest,
             });
 
             // Check availability
+            console.log('[GOOGLE PAY] Checking if Google Pay is available...');
             const result = await paymentRequest.canMakePayment();
+            console.log('[GOOGLE PAY] canMakePayment result:', result);
+
             document.getElementById('loading-message').classList.add('hidden');
 
             if (result) {
+                console.log('[GOOGLE PAY] Mounting button to #google-pay-button...');
                 prButton.mount('#google-pay-button');
+                console.log('[GOOGLE PAY] Button mounted successfully!');
             } else {
+                console.warn('[GOOGLE PAY] Not available in this browser/environment');
                 document.getElementById('googlepay-errors').textContent =
                     'Google Pay není k dispozici v tomto prohlížeči. Použijte prosím platbu kartou.';
             }
