@@ -238,9 +238,15 @@ class RegistrationController extends Controller
     }
     public function success()
     {
-        // Vždy redirect na homepage s poděkováním (žádná registrace)
-        // Platba bude uložena přes webhook, ne tady
-        return redirect()->route('index')->with('success', 'Děkuji za příspěvek pro Dům pro Julii, Jitka Dvořáčková.');
+        $amount = session('last_donation_amount', null); // Načte částku ze session
+        $message = 'Děkuji za příspěvek pro Dům pro Julii. Jitka Dvořáčková.';
+
+        if ($amount !== null) {
+            $message = 'Děkuji za příspěvek ' . number_format($amount, 0, ',', ' ') . ' Kč pro Dům pro Julii. Jitka Dvořáčková.';
+            session()->forget('last_donation_amount'); // Odstraní částku ze session
+        }
+
+        return redirect()->route('index')->with('success', $message);
     }
 
 
@@ -312,9 +318,10 @@ class RegistrationController extends Controller
         $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
         $payment->amount = $checkout_session->metadata->amount / 100;
         $payment->stripe_session_id = $checkout_session->id;
-        $payment->stripe_payment_intent_id = $checkout_session->payment_intent ?? null;
-
-        $payment->save();
+                $payment->save();
+        
+                // Uloží částku do session pro zobrazení poděkování
+                session(['last_donation_amount' => $payment->amount]);
     }
 
     private function createPayout($payout)
@@ -482,9 +489,10 @@ class RegistrationController extends Controller
         $payment->event_id = $paymentIntent->metadata->event_id;
         $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
         $payment->amount = $paymentIntent->metadata->amount / 100; // Convert from minor units
-        $payment->stripe_session_id = null; // Elements doesn't use checkout session
-        $payment->stripe_payment_intent_id = $paymentIntent->id;
         $payment->save();
+
+        // Uloží částku do session pro zobrazení poděkování
+        session(['last_donation_amount' => $payment->amount]);
 
         Log::info('Payment created from Payment Intent', [
             'payment_id' => $payment->id,
