@@ -336,7 +336,12 @@ class RegistrationController extends Controller
         // Společná data
         $payment->event_id = $checkout_session->metadata->event_id;
         $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
-        $payment->amount = $checkout_session->metadata->amount / 100;
+        $payment->total_amount = $checkout_session->metadata->amount / 100;
+        
+        // Pro Checkout Session (starší implementace) nemusíme mít transfer data snadno dostupná, 
+        // pokud to nebyl connect. Prozatím necháme null nebo stejné jako total.
+        // Vylepšení: Pokud bychom používali Connect i zde, museli bychom to vytáhnout z payment_intentu.
+        
         $payment->stripe_session_id = $checkout_session->id;
                 $payment->save();
     }
@@ -465,7 +470,11 @@ class RegistrationController extends Controller
                     $payment->donor_name = $paymentIntent->metadata->donor_name ?? null;
                     $payment->event_id = $paymentIntent->metadata->event_id;
                     $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
-                    $payment->amount = $paymentIntent->metadata->amount / 100;
+                    
+                    $payment->total_amount = $paymentIntent->amount / 100;
+                    $payment->payout_amount = ($paymentIntent->transfer_data->amount ?? $paymentIntent->amount) / 100;
+                    $payment->fee_amount = ($paymentIntent->application_fee_amount ?? 0) / 100;
+
                     $payment->stripe_session_id = null; // Elements nepoužívá session
                     $payment->stripe_payment_intent_id = $paymentIntent->id;
                     $payment->save();
@@ -505,13 +514,18 @@ class RegistrationController extends Controller
         $payment->donor_name = $paymentIntent->metadata->donor_name ?? null;
         $payment->event_id = $paymentIntent->metadata->event_id;
         $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
-        $payment->amount = $paymentIntent->metadata->amount / 100; // Convert from minor units
+        
+        // Částky a poplatky
+        $payment->total_amount = $paymentIntent->amount / 100; // Hrubá částka od dárce
+        $payment->payout_amount = ($paymentIntent->transfer_data->amount ?? $paymentIntent->amount) / 100; // Čistá částka pro příjemce
+        $payment->fee_amount = ($paymentIntent->application_fee_amount ?? 0) / 100; // Poplatek platformy
+
         $payment->stripe_payment_intent_id = $paymentIntent->id;
         $payment->save();
 
         Log::info('Payment created from Payment Intent', [
             'payment_id' => $payment->id,
-            'amount' => $payment->amount,
+            'amount' => $payment->total_amount,
             'donor_email' => $payment->donor_email,
         ]);
     }
@@ -592,6 +606,46 @@ class RegistrationController extends Controller
             'donorEmail' => $request->donor_email,
             'stripeKey' => env('STRIPE_KEY'),
         ]);
+    }
+
+    /**
+     * Vygeneruje PaymentIntent pro Stripe Connect (Destination Charges) s poplatkem platformy.
+     */
+    public function createConnectPaymentIntent(Request $request)
+    {
+        // Pro účely testování předpokládáme, že connectedAccountId je předáno v requestu nebo je statické
+        // V reálné aplikaci byste ho získali z databáze nebo jiného zdroje
+        // Mělo by to být ID Custom Connected Account (acct_...)
+        $connectedAccountId = $request->input('connected_account_id', 'acct_1PvCa82LSxhftJEa'); // Příklad, nahraďte skutečným ID
+
+        $stripe = new StripeClient(env('STRIPE_SECRET_KEY')); // Použít secret klíč
+
+        try {
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => 5000, // 5000 centů = 50.00 CZK
+                'currency' => 'czk',
+                'payment_method_types' => ['card'], // Nebo 'card', 'promptpay', atd. podle potřeby
+                'transfer_data' => [
+                    'destination' => $connectedAccountId,
+                    'amount' => 4900, // 5000 - 100 = 4900 centů jde na connected account
+                ],
+                'application_fee_amount' => 100, // 100 centů = 1.00 CZK je poplatek platformy
+                'confirm' => true, // Potvrdit PaymentIntent ihned
+                'return_url' => route('payment.success') . '?payment_intent={PAYMENT_INTENT_ID}', // URL pro přesměrování po 3D Secure
+            ]);
+
+            return response()->json([
+                'clientSecret' => $paymentIntent->client_secret,
+                'status' => $paymentIntent->status,
+            ]);
+
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            // Zpracování chyb Stripe API
+            return response()->json(['error' => $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            // Zpracování obecných chyb
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
 }
