@@ -52,11 +52,11 @@
                 <div>
                     <h3 class="font-semibold text-lg mb-4 text-center">Vyberte způsob platby</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
                         <!-- Platba kartou -->
                         <button
                             onclick="selectPaymentMethod('card')"
-                            class="payment-method-btn flex flex-col items-center justify-center p-8 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
+                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
                         >
                             <div class="flex items-center gap-4 mb-4">
                                 <!-- Visa -->
@@ -71,11 +71,21 @@
                         <!-- Google Pay -->
                         <button
                             onclick="selectPaymentMethod('googlepay')"
-                            class="payment-method-btn flex flex-col items-center justify-center p-8 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
+                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
                         >
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" class="h-12 mb-4">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" class="w-28 h-auto mb-4">
                             <span class="font-semibold text-xl">Google Pay</span>
                             <span class="text-sm text-gray-500 mt-2">Rychlá platba</span>
+                        </button>
+
+                        <!-- Apple Pay -->
+                        <button
+                            onclick="selectPaymentMethod('applepay')"
+                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
+                        >
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" class="h-10 mb-4">
+                            <span class="font-semibold text-xl">Apple Pay</span>
+                            <span class="text-sm text-gray-500 mt-2">Pro Apple zařízení</span>
                         </button>
                     </div>
                 </div>
@@ -83,10 +93,10 @@
                 <!-- Info box -->
                 <div class="mt-8 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
                     <p class="mb-2">
-                        <strong>Bezpečná platba:</strong> Platby kartou a Google Pay jsou zpracovávány přes Stripe.
+                        <strong>Bezpečná platba:</strong> Platby kartou, Google Pay a Apple Pay jsou zpracovávány přes Stripe.
                     </p>
                     <p class="mb-2">
-                        <strong>Proč Stripe?</strong> Na webu používáme Stripe, protože jako jedna z mála platebních služeb umožňuje, aby platby kartou, Google Pay a další šly přímo na účet příjemce, aniž by procházely přes můj účet jako provozovatele, nebo Jitčin účet jako hlavní aktérky a zároveň nabízí jednoduchou implementaci bez zbytečných administrativních podmínek, které běžně vyžadují některé české platební brány.
+                        <strong>Proč Stripe?</strong> Na webu používáme Stripe, protože jako jedna z mála platebních služeb umožňuje, aby platby kartou, Google Pay, Apple Pay a další šly přímo na účet příjemce, aniž by procházely přes můj účet jako provozovatele, nebo Jitčin účet jako hlavní aktérky a zároveň nabízí jednoduchou implementaci bez zbytečných administrativních podmínek, které běžně vyžadují některé české platební brány.
                     </p>
                     <p>
                         <strong>Transparentnost:</strong> Kromě nezbytných poplatků platebnímu operátorovi jdou veškeré prostředky na účet <strong>2101782768/2010</strong> organizace Dům pro Julii.
@@ -123,6 +133,9 @@
             } else if (method === 'googlepay') {
                 // Redirect to Google Pay page
                 window.location.href = `/donation/pay-googlepay?${params.toString()}`;
+            } else if (method === 'applepay') {
+                // Redirect to Apple Pay page
+                window.location.href = `/donation/pay-applepay?${params.toString()}`;
             }
         }
     </script>

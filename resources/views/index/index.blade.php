@@ -233,8 +233,13 @@
                                             </div>
 
                                             <!-- Google Pay Badge -->
-                                            <div class="bg-white rounded h-9 sm:h-11 px-2 flex items-center justify-center">
-                                                <img src="{{ asset('gpay-icon.png') }}" alt="Google Pay" class="h-6 sm:h-8 w-auto">
+                                            <div class="bg-white rounded h-9 sm:h-11 px-[0.1rem] sm:px-1 flex items-center justify-center">
+                                                <img src="{{ asset('gpay-icon.png') }}" alt="Google Pay" class="h-8 sm:h-9 w-auto">
+                                            </div>
+
+                                            <!-- Apple Pay Badge -->
+                                            <div class="bg-white rounded h-9 sm:h-11 flex items-center justify-center px-2">
+                                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" class="h-5 sm:h-7 w-auto">
                                             </div>
                                         </div>
 

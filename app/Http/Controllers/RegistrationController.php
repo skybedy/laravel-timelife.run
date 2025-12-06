@@ -574,19 +574,23 @@ class RegistrationController extends Controller
 
 
 
+    /**
+     * Stránka pro platbu přes Apple Pay
+     */
+    public function payWithApplePay(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:50|max:1000000',
+            'donor_name' => 'required|string|max:255',
+            'donor_email' => 'required|email|max:255',
+        ]);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return view('donations.pay-applepay', [
+            'amount' => $request->amount,
+            'donorName' => $request->donor_name,
+            'donorEmail' => $request->donor_email,
+            'stripeKey' => env('STRIPE_KEY'),
+        ]);
+    }
 
 }
