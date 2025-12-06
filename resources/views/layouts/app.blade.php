@@ -104,5 +104,6 @@ input[type=file]::file-selector-button:hover {
             @include('layouts.footer')
         </div>
 
+        @stack('scripts')
     </body>
 </html>

@@ -63,8 +63,8 @@
                     amount: {{ $amount }},
                     event_id: 10,
                     payment_recipient_id: 3,
-                    donor_email: '{{ $donorEmail }}',
-                    donor_name: '{{ $donorName }}',
+                    donor_email: '{{ $donorEmail ?? '' }}',
+                    donor_name: '{{ $donorName ?? '' }}',
                 })
             });
 

@@ -20,6 +20,7 @@
                                 type="text"
                                 id="donor-name"
                                 name="donor_name"
+                                value="Test Testovič"
                                 placeholder="Jan Novák"
                                 maxlength="255"
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -32,6 +33,7 @@
                                 type="email"
                                 id="donor-email"
                                 name="donor_email"
+                                value="test@example.com"
                                 placeholder="jan.novak@example.com"
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             >

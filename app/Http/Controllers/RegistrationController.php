@@ -398,7 +398,7 @@ class RegistrationController extends Controller
                 'transfer_data' => [
                     'destination' => $paymentRecipient->stripe_client_id,
                 ],
-                'statement_descriptor' => 'LIFERUN.CZ JDVORACKO',
+                'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
                     'event_id' => $request->event_id,
                     'payment_recipient_id' => $request->payment_recipient_id,

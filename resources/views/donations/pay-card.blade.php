@@ -52,49 +52,81 @@
     @push('scripts')
     <script src="https://js.stripe.com/v3/"></script>
     <script>
+        console.log('[DEBUG] Script loaded');
+        console.log('[DEBUG] Stripe key:', '{{ $stripeKey }}');
+
         const stripe = Stripe('{{ $stripeKey }}');
+        console.log('[DEBUG] Stripe initialized:', stripe);
+
         let elements;
         let paymentElement;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[DEBUG] DOMContentLoaded fired');
             await initializeStripe();
         });
 
         async function initializeStripe() {
-            // Create Payment Intent
-            const response = await fetch('{{ route('registration.payment-intent.create') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value
-                },
-                body: JSON.stringify({
-                    amount: {{ $amount }},
-                    event_id: 10,
-                    payment_recipient_id: 3,
-                    donor_email: '{{ $donorEmail }}',
-                    donor_name: '{{ $donorName }}',
-                })
-            });
+            console.log('[DEBUG] initializeStripe() called');
 
-            const { clientSecret, error } = await response.json();
+            try {
+                // Create Payment Intent
+                console.log('[DEBUG] Creating Payment Intent with amount:', {{ $amount }});
 
-            if (error) {
-                showError(error);
-                return;
-            }
+                const response = await fetch('{{ route('registration.payment-intent.create') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value
+                    },
+                    body: JSON.stringify({
+                        amount: {{ $amount }},
+                        event_id: 10,
+                        payment_recipient_id: 3,
+                        donor_email: '{{ $donorEmail ?? '' }}',
+                        donor_name: '{{ $donorName ?? '' }}',
+                    })
+                });
 
-            // Create Elements instance
-            const appearance = {
-                theme: 'stripe',
-                variables: {
-                    colorPrimary: '#3b82f6',
+                console.log('[DEBUG] Payment Intent response status:', response.status);
+
+                const responseData = await response.json();
+                console.log('[DEBUG] Payment Intent response data:', responseData);
+
+                const { clientSecret, error } = responseData;
+
+                if (error) {
+                    console.error('[DEBUG] Payment Intent error:', error);
+                    showError(error);
+                    return;
                 }
-            };
 
-            elements = stripe.elements({ clientSecret, appearance });
-            paymentElement = elements.create('payment');
-            paymentElement.mount('#payment-element');
+                console.log('[DEBUG] Client secret received:', clientSecret ? 'YES' : 'NO');
+
+                // Create Elements instance
+                const appearance = {
+                    theme: 'stripe',
+                    variables: {
+                        colorPrimary: '#3b82f6',
+                    }
+                };
+
+                console.log('[DEBUG] Creating Elements with appearance:', appearance);
+                elements = stripe.elements({ clientSecret, appearance });
+                console.log('[DEBUG] Elements created:', elements);
+
+                console.log('[DEBUG] Creating payment element');
+                paymentElement = elements.create('payment');
+                console.log('[DEBUG] Payment element created:', paymentElement);
+
+                console.log('[DEBUG] Mounting payment element to #payment-element');
+                paymentElement.mount('#payment-element');
+                console.log('[DEBUG] Payment element mounted successfully');
+
+            } catch (err) {
+                console.error('[DEBUG] Exception in initializeStripe:', err);
+                showError('Chyba při inicializaci platby: ' + err.message);
+            }
         }
 
         // Handle form submission
