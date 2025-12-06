@@ -1,10 +1,10 @@
 @php
     switch ($type) {
         case 'success':
-            $bgColor = 'bg-green-100';
-            $borderColor = 'border-green-400';
-            $textColor = 'text-green-700';
-            $iconColor = 'text-green-500';
+            $bgColor = 'bg-amber-100';
+            $borderColor = 'border-amber-400';
+            $textColor = 'text-amber-800';
+            $iconColor = 'text-amber-500';
             break;
         case 'error':
             $bgColor = 'bg-red-100';
