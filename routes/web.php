@@ -51,7 +51,6 @@ Route::get('/donation/payment-selection', [RegistrationController::class, 'payme
 // Donation payment method pages
 Route::get('/donation/pay-card', [RegistrationController::class, 'payWithCard'])->name('donation.pay-card');
 Route::get('/donation/pay-googlepay', [RegistrationController::class, 'payWithGooglePay'])->name('donation.pay-googlepay');
-Route::get('/donation/pay-qr', [RegistrationController::class, 'payWithQR'])->name('donation.pay-qr');
 
 
 

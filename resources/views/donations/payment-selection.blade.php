@@ -44,44 +44,32 @@
                 <div>
                     <h3 class="font-semibold text-lg mb-4 text-center">Vyberte způsob platby</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                         <!-- Platba kartou -->
                         <button
                             onclick="selectPaymentMethod('card')"
-                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
+                            class="payment-method-btn flex flex-col items-center justify-center p-8 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
                         >
-                            <svg class="w-16 h-16 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-20 h-20 text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                             </svg>
-                            <span class="font-semibold text-lg">Platební karta</span>
-                            <span class="text-xs text-gray-500 mt-1">Visa, Mastercard</span>
+                            <span class="font-semibold text-xl">Platební karta</span>
+                            <span class="text-sm text-gray-500 mt-2">Visa, Mastercard</span>
                         </button>
 
                         <!-- Google Pay -->
                         <button
                             onclick="selectPaymentMethod('googlepay')"
-                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
+                            class="payment-method-btn flex flex-col items-center justify-center p-8 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
                         >
-                            <svg class="w-16 h-16 mb-3" viewBox="0 0 48 48" fill="none">
+                            <svg class="w-20 h-20 mb-4" viewBox="0 0 48 48" fill="none">
                                 <path d="M24 9.5c-7.72 0-14 6.28-14 14s6.28 14 14 14c7.72 0 14-6.28 14-14s-6.28-14-14-14zm0 25.2c-6.18 0-11.2-5.02-11.2-11.2S17.82 12.3 24 12.3s11.2 5.02 11.2 11.2-5.02 11.2-11.2 11.2z" fill="#EA4335"/>
                                 <path d="M29.87 23.5h-2.24v2.24h-7v-2.24h-2.24v-7h2.24v-2.24h7v2.24h2.24v7z" fill="#34A853"/>
                                 <path d="M20.63 16.26h7v2.24h-7v-2.24z" fill="#4285F4"/>
                                 <path d="M20.63 25.74h7v2.24h-7v-2.24z" fill="#FBBC04"/>
                             </svg>
-                            <span class="font-semibold text-lg">Google Pay</span>
-                            <span class="text-xs text-gray-500 mt-1">Rychlá platba</span>
-                        </button>
-
-                        <!-- QR kód -->
-                        <button
-                            onclick="selectPaymentMethod('qr')"
-                            class="payment-method-btn flex flex-col items-center justify-center p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
-                        >
-                            <svg class="w-16 h-16 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                            </svg>
-                            <span class="font-semibold text-lg">QR kód</span>
-                            <span class="text-xs text-gray-500 mt-1">Bankovní převod</span>
+                            <span class="font-semibold text-xl">Google Pay</span>
+                            <span class="text-sm text-gray-500 mt-2">Rychlá platba</span>
                         </button>
                     </div>
                 </div>
@@ -120,9 +108,6 @@
             } else if (method === 'googlepay') {
                 // Redirect to Google Pay page
                 window.location.href = `/donation/pay-googlepay?${params.toString()}`;
-            } else if (method === 'qr') {
-                // Redirect to QR code page
-                window.location.href = `/donation/pay-qr?${params.toString()}`;
             }
         }
     </script>

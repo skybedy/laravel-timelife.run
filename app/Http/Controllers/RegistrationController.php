@@ -542,43 +542,6 @@ class RegistrationController extends Controller
         ]);
     }
 
-    /**
-     * Stránka s QR kódem pro bankovní převod
-     */
-    public function payWithQR(Request $request)
-    {
-        $request->validate([
-            'amount' => 'required|integer|min:50|max:1000000',
-        ]);
-
-        // Účet Dům pro Julii - IBAN formát
-        $iban = 'CZ6420100000002101782768';
-        $amount = $request->amount;
-
-        // Zpráva pro příjemce ve formátu "Jitka 100 pulmaratonu"
-        $message = 'Jitka ' . $amount . ' pulmaratonu';
-
-        // Czech SPD (Short Payment Descriptor) format
-        // Formát: SPD*verze*ACC:IBAN*AM:částka.00*CC:měna*MSG:zpráva
-        $qrData = sprintf(
-            'SPD*1.0*ACC:%s*AM:%s.00*CC:CZK*MSG:%s',
-            $iban,
-            $amount,
-            $message
-        );
-
-        // Generate QR code as base64 PNG
-        $qrcode = new \chillerlan\QRCode\QRCode();
-        $qrCodeImage = $qrcode->render($qrData);
-
-        return view('donations.pay-qr', [
-            'amount' => $request->amount,
-            'donorName' => $request->donor_name,
-            'donorEmail' => $request->donor_email,
-            'qrCodeImage' => $qrCodeImage,
-            'message' => $message,
-        ]);
-    }
 
 
 
