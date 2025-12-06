@@ -416,6 +416,14 @@ class RegistrationController extends Controller
 
         // Částka v haléřích (Stripe používá minor units)
         $amountInCents = $request->amount * 100;
+        $applicationFeeAmount = env('STRIPE_APPLICATION_FEE', 100); // Poplatek platformy (default 100 centů = 1 Kč)
+        $amountToRecipient = $amountInCents - $applicationFeeAmount;
+
+        // Kontrola, aby částka pro příjemce nebyla záporná
+        if ($amountToRecipient < 0) {
+            $amountToRecipient = 0;
+            $applicationFeeAmount = $amountInCents; // Vše jde jako poplatek, pokud je částka malá
+        }
 
         try {
             $paymentIntent = $stripe->paymentIntents->create([
@@ -426,7 +434,9 @@ class RegistrationController extends Controller
                 ],
                 'transfer_data' => [
                     'destination' => $paymentRecipient->stripe_client_id,
+                    'amount' => $amountToRecipient, // Částka určená příjemci
                 ],
+                'application_fee_amount' => $applicationFeeAmount, // Poplatek platformy
                 'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
                     'event_id' => $request->event_id,
