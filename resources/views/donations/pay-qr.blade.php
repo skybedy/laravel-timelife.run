@@ -41,12 +41,10 @@
                             <span class="font-medium">Částka:</span>
                             <span class="font-bold text-blue-600">{{ $amount }} Kč</span>
                         </div>
-                        @if($donorName)
                         <div class="flex justify-between">
                             <span class="font-medium">Zpráva pro příjemce:</span>
-                            <span>{{ $donorName }}</span>
+                            <span class="font-mono">{{ $message }}</span>
                         </div>
-                        @endif
                     </div>
                 </div>
 
