@@ -100,9 +100,15 @@
                 country: 'CZ',
                 currency: 'czk',
                 total: {
-                    label: 'Jitka Dvořáčková a 100 půlmaratonů za 100 dní',
+                    label: 'Celkem',
                     amount: {{ $amount }} * 100,
                 },
+                displayItems: [
+                    {
+                        label: 'Jitka Dvořáčková a 100 půlmaratonů za 100 dní',
+                        amount: {{ $amount }} * 100,
+                    }
+                ],
                 requestPayerName: true,
                 requestPayerEmail: true,
             });
