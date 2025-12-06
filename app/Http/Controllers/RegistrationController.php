@@ -474,21 +474,9 @@ class RegistrationController extends Controller
                     
                     $payment->total_amount = $paymentIntent->amount / 100;
                     
-                    try {
-                        if (isset($paymentIntent->latest_charge)) {
-                            $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, ['expand' => ['balance_transaction']]);
-                            $feeInCents = $charge->balance_transaction->fee;
-                            $payment->fee_amount = $feeInCents / 100;
-                            $payment->payout_amount = ($paymentIntent->amount - $feeInCents) / 100;
-                        } else {
-                            $payment->fee_amount = 0;
-                            $payment->payout_amount = $payment->total_amount;
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('ConfirmPayment fee error: ' . $e->getMessage());
-                        $payment->fee_amount = 0;
-                        $payment->payout_amount = $payment->total_amount;
-                    }
+                    $fees = $this->calculateFees($paymentIntent);
+                    $payment->fee_amount = $fees['fee_amount'];
+                    $payment->payout_amount = $fees['payout_amount'];
 
                     $payment->stripe_session_id = null; // Elements nepoužívá session
                     $payment->stripe_payment_intent_id = $paymentIntent->id;
@@ -517,9 +505,21 @@ class RegistrationController extends Controller
      */
     private function createPaymentFromIntent($paymentIntent)
     {
-        // Prevents duplicate payments
-        if (Payment::where('stripe_payment_intent_id', $paymentIntent->id)->exists()) {
+        $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+
+        if ($payment) {
             Log::info('Payment already exists for payment_intent: ' . $paymentIntent->id);
+            
+            // Pokud chybí fee (je 0), zkusíme ho dopočítat a aktualizovat
+            if ($payment->fee_amount == 0) {
+                $fees = $this->calculateFees($paymentIntent);
+                if ($fees['fee_amount'] > 0) {
+                    $payment->fee_amount = $fees['fee_amount'];
+                    $payment->payout_amount = $fees['payout_amount'];
+                    $payment->save();
+                    Log::info('Updated payment fees via webhook', $fees);
+                }
+            }
             return;
         }
 
@@ -533,24 +533,9 @@ class RegistrationController extends Controller
         // Částky a poplatky
         $payment->total_amount = $paymentIntent->amount / 100; // Hrubá částka od dárce
         
-        // Získání reálných poplatků ze Stripe API
-        try {
-            $stripe = app(StripeClient::class);
-            if (isset($paymentIntent->latest_charge)) {
-                $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, ['expand' => ['balance_transaction']]);
-                $feeInCents = $charge->balance_transaction->fee;
-                
-                $payment->fee_amount = $feeInCents / 100;
-                $payment->payout_amount = ($paymentIntent->amount - $feeInCents) / 100;
-            } else {
-                $payment->fee_amount = 0;
-                $payment->payout_amount = $payment->total_amount;
-            }
-        } catch (\Exception $e) {
-            Log::error('Error retrieving fee details: ' . $e->getMessage());
-            $payment->fee_amount = 0;
-            $payment->payout_amount = $payment->total_amount;
-        }
+        $fees = $this->calculateFees($paymentIntent);
+        $payment->fee_amount = $fees['fee_amount'];
+        $payment->payout_amount = $fees['payout_amount'];
 
         $payment->stripe_payment_intent_id = $paymentIntent->id;
         $payment->save();
@@ -560,6 +545,35 @@ class RegistrationController extends Controller
             'amount' => $payment->total_amount,
             'donor_email' => $payment->donor_email,
         ]);
+    }
+
+    /**
+     * Pomocná metoda pro výpočet poplatků ze Stripe API
+     */
+    private function calculateFees($paymentIntent)
+    {
+        $result = [
+            'fee_amount' => 0,
+            'payout_amount' => $paymentIntent->amount / 100,
+        ];
+
+        try {
+            $stripe = app(StripeClient::class);
+            if (isset($paymentIntent->latest_charge)) {
+                $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, ['expand' => ['balance_transaction']]);
+                
+                // Kontrola existence balance_transaction objektu
+                if (isset($charge->balance_transaction) && !is_string($charge->balance_transaction)) {
+                    $feeInCents = $charge->balance_transaction->fee;
+                    $result['fee_amount'] = $feeInCents / 100;
+                    $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error calculating fees: ' . $e->getMessage());
+        }
+
+        return $result;
     }
 
     /**
