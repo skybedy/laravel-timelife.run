@@ -23,6 +23,7 @@
                                 placeholder="Jan Novák"
                                 maxlength="255"
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
                             >
                         </div>
 
@@ -34,6 +35,7 @@
                                 name="donor_email"
                                 placeholder="jan.novak@example.com"
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                required
                             >
                             <p class="text-xs text-gray-500 mt-1"></p>
                         </div>
