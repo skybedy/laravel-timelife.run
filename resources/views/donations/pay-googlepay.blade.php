@@ -137,7 +137,7 @@
 
             // Handle payment
             paymentRequest.on('paymentmethod', async (ev) => {
-                const {error: confirmError} = await stripe.confirmPayment({
+                const {paymentIntent, error: confirmError} = await stripe.confirmPayment({
                     clientSecret: clientSecret,
                     confirmParams: {
                         payment_method: ev.paymentMethod.id,
@@ -151,7 +151,7 @@
                     showError(confirmError.message);
                 } else {
                     ev.complete('success');
-                    window.location.href = '{{ route('payment.success') }}';
+                    window.location.href = '{{ route('payment.success') }}?payment_intent=' + paymentIntent.id;
                 }
             });
         }
