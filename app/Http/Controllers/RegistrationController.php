@@ -260,10 +260,10 @@ class RegistrationController extends Controller
         // Vyčistit session, pokud tam něco zbylo
         session()->forget('last_donation_amount');
 
-        $message = 'Děkuji za příspěvek pro Dům pro Julii.<br>Jitka Dvořáčková.';
+        $message = 'Děkuji za příspěvek na Dům pro Julii.<br>Jitka Dvořáčková.';
 
         if ($amount !== null) {
-            $message = 'Děkuji za příspěvek ' . number_format($amount, 0, ',', ' ') . ' Kč pro Dům pro Julii.<br>Jitka Dvořáčková.';
+            $message = 'Děkuji za příspěvek ' . number_format($amount, 0, ',', ' ') . ' Kč na Dům pro Julii.<br>Jitka Dvořáčková.';
         }
 
         return redirect()->route('index')->with('success', $message);
