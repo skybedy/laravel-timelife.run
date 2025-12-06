@@ -238,12 +238,17 @@ class RegistrationController extends Controller
     }
     public function success()
     {
+        Log::info('Success method called.');
         $amount = session('last_donation_amount', null); // Načte částku ze session
+        Log::info('Success method: Amount from session', ['amount' => $amount]);
         $message = 'Děkuji za příspěvek pro Dům pro Julii. Jitka Dvořáčková.';
 
         if ($amount !== null) {
             $message = 'Děkuji za příspěvek ' . number_format($amount, 0, ',', ' ') . ' Kč pro Dům pro Julii. Jitka Dvořáčková.';
             session()->forget('last_donation_amount'); // Odstraní částku ze session
+            Log::info('Success method: Amount used and session cleared.', ['final_message' => $message]);
+        } else {
+            Log::warning('Success method: Amount was null, using default message.');
         }
 
         return redirect()->route('index')->with('success', $message);
@@ -493,6 +498,8 @@ class RegistrationController extends Controller
 
         // Uloží částku do session pro zobrazení poděkování
         session(['last_donation_amount' => $payment->amount]);
+        Log::info('createPaymentFromIntent: Amount stored in session', ['amount' => $payment->amount, 'session_amount' => session('last_donation_amount')]);
+        Log::info('createPayment: Amount stored in session', ['amount' => $payment->amount, 'session_amount' => session('last_donation_amount')]);
 
         Log::info('Payment created from Payment Intent', [
             'payment_id' => $payment->id,
