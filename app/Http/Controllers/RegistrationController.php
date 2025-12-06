@@ -436,7 +436,7 @@ class RegistrationController extends Controller
                     'destination' => $paymentRecipient->stripe_client_id,
                     'amount' => $amountToRecipient, // Částka určená příjemci
                 ],
-                'application_fee_amount' => $applicationFeeAmount, // Poplatek platformy
+                // application_fee_amount se nesmí posílat s transfer_data[amount] - poplatek je rozdíl
                 'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
                     'event_id' => $request->event_id,
@@ -483,7 +483,8 @@ class RegistrationController extends Controller
                     
                     $payment->total_amount = $paymentIntent->amount / 100;
                     $payment->payout_amount = ($paymentIntent->transfer_data->amount ?? $paymentIntent->amount) / 100;
-                    $payment->fee_amount = ($paymentIntent->application_fee_amount ?? 0) / 100;
+                    // Poplatek je rozdíl
+                    $payment->fee_amount = $payment->total_amount - $payment->payout_amount;
 
                     $payment->stripe_session_id = null; // Elements nepoužívá session
                     $payment->stripe_payment_intent_id = $paymentIntent->id;
@@ -528,7 +529,9 @@ class RegistrationController extends Controller
         // Částky a poplatky
         $payment->total_amount = $paymentIntent->amount / 100; // Hrubá částka od dárce
         $payment->payout_amount = ($paymentIntent->transfer_data->amount ?? $paymentIntent->amount) / 100; // Čistá částka pro příjemce
-        $payment->fee_amount = ($paymentIntent->application_fee_amount ?? 0) / 100; // Poplatek platformy
+        
+        // Poplatek platformy je rozdíl (protože u Destination Charges se application_fee_amount nepoužívá s transfer_data[amount])
+        $payment->fee_amount = $payment->total_amount - $payment->payout_amount;
 
         $payment->stripe_payment_intent_id = $paymentIntent->id;
         $payment->save();
