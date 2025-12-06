@@ -3,8 +3,10 @@
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden sm:rounded-lg border p-8 border-blue-300 shadow-lg">
 
-                <!-- Nadpis -->
-                <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Google Pay</h2>
+                <!-- Nadpis (Logo) -->
+                <div class="flex items-center justify-center mb-6">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" class="h-12">
+                </div>
                 <p class="text-center text-gray-600 mb-8">
                     Částka: <strong class="text-2xl text-blue-600">{{ $amount }} Kč</strong>
                 </p>
