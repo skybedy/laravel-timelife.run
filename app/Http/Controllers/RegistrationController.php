@@ -537,6 +537,8 @@ class RegistrationController extends Controller
     {
         $request->validate([
             'amount' => 'required|integer|min:50|max:1000000',
+            'donor_name' => 'required|string|max:255',
+            'donor_email' => 'required|email|max:255',
         ]);
 
         return view('donations.pay-card', [
@@ -554,8 +556,8 @@ class RegistrationController extends Controller
     {
         $request->validate([
             'amount' => 'required|integer|min:50|max:1000000',
-            'donorName' => 'required|string|max:255',
-            'donorEmail' => 'required|email|max:255',
+            'donor_name' => 'required|string|max:255',
+            'donor_email' => 'required|email|max:255',
         ]);
 
         return view('donations.pay-googlepay', [

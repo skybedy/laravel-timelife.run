@@ -12,7 +12,7 @@
                 <!-- Formulář pro údaje dárce -->
                 <form id="donor-form" class="mb-8">
                     <div class="bg-gray-50 rounded-lg p-6 space-y-4">
-                        <h3 class="font-semibold text-lg mb-4">Vaše údaje (volitelné)</h3>
+                        <h3 class="font-semibold text-lg mb-4">Vaše údaje</h3>
 
                         <div>
                             <label for="donor-name" class="block text-sm font-medium text-gray-700 mb-1">Jméno a příjmení</label>
@@ -25,6 +25,9 @@
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 required
                             >
+                            @error('donor_name')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -37,6 +40,9 @@
                                 class="w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 required
                             >
+                            @error('donor_email')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                             <p class="text-xs text-gray-500 mt-1"></p>
                         </div>
                     </div>
@@ -95,6 +101,12 @@
         const amount = {{ $amount }};
 
         function selectPaymentMethod(method) {
+            const form = document.getElementById('donor-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
             const donorName = document.getElementById('donor-name').value;
             const donorEmail = document.getElementById('donor-email').value;
 
