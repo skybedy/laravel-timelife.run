@@ -436,11 +436,9 @@ class RegistrationController extends Controller
                 'automatic_payment_methods' => [
                     'enabled' => true,
                 ],
-                'on_behalf_of' => $paymentRecipient->stripe_client_id, // Poplatky jdou na tento účet
-                'application_fee_amount' => 0, // Náš poplatek je 0, takže všechno ostatní jde příjemci
-                'transfer_data' => [
-                    'destination' => 'self', // Peníze zůstanou na účtu, na kterém vznikl Charge (tj. Connected Account)
-                ],
+                'on_behalf_of' => $paymentRecipient->stripe_client_id, // Poplatky jdou na tento účet a platba se vypořádá na něm
+                'application_fee_amount' => 0, // Náš poplatek je 0
+                // transfer_data nezadáváme - peníze zůstávají na účtu on_behalf_of
                 'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
                     'event_id' => $request->event_id,
