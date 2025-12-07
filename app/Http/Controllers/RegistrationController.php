@@ -580,27 +580,24 @@ class RegistrationController extends Controller
                     $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
                     Log::info('calculateFees: Fee and payout calculated', $result);
                 } else {
-                    Log::warning('calculateFees: Balance transaction data missing fee or null on platform. Trying connected account...');
+                    Log::warning('calculateFees: Balance transaction data missing fee or null on platform. Trying to find Transfer...');
                     
-                    // Fallback: Zkusit načíst charge přes connected account (pro případ on_behalf_of chování)
-                    if (isset($paymentIntent->transfer_data->destination)) {
+                    // Pokud chybí balance transaction (u Destination Charges), poplatky zjistíme z rozdílu mezi Charge a Transfer
+                    if (isset($paymentIntent->transfer_group)) {
                         try {
-                            $connectedCharge = $stripe->charges->retrieve(
-                                $charge->id,
-                                ['expand' => ['balance_transaction']],
-                                ['stripe_account' => $paymentIntent->transfer_data->destination]
-                            );
+                            $transfers = $stripe->transfers->all(['transfer_group' => $paymentIntent->transfer_group, 'limit' => 1]);
                             
-                            if (isset($connectedCharge->balance_transaction) && !is_string($connectedCharge->balance_transaction)) {
-                                $feeInCents = $connectedCharge->balance_transaction->fee;
-                                $result['fee_amount'] = $feeInCents / 100;
-                                $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
-                                Log::info('calculateFees: Fee and payout calculated via Connected Account', $result);
+                            if (count($transfers->data) > 0) {
+                                $transfer = $transfers->data[0];
+                                // Transfer amount je částka, která odešla na connected account
+                                $result['payout_amount'] = $transfer->amount / 100;
+                                $result['fee_amount'] = ($paymentIntent->amount - $transfer->amount) / 100;
+                                Log::info('calculateFees: Fees calculated from Transfer object', $result);
                             } else {
-                                Log::warning('calculateFees: BT still missing on connected account');
+                                Log::warning('calculateFees: No transfer found for group: ' . $paymentIntent->transfer_group);
                             }
                         } catch (\Exception $ex) {
-                            Log::warning('calculateFees: Failed to fetch via connected account: ' . $ex->getMessage());
+                            Log::warning('calculateFees: Failed to list transfers: ' . $ex->getMessage());
                         }
                     }
                 }
