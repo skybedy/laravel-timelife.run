@@ -554,23 +554,39 @@ class RegistrationController extends Controller
     {
         $result = [
             'fee_amount' => 0,
-            'payout_amount' => $paymentIntent->amount / 100,
+            'payout_amount' => $paymentIntent->amount / 100, // Fallback
         ];
 
         try {
             $stripe = app(StripeClient::class);
+            Log::info('calculateFees: PaymentIntent ID: ' . $paymentIntent->id);
+            Log::info('calculateFees: PaymentIntent latest_charge: ' . ($paymentIntent->latest_charge ?? 'N/A'));
+
             if (isset($paymentIntent->latest_charge)) {
                 $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, ['expand' => ['balance_transaction']]);
-                
-                // Kontrola existence balance_transaction objektu
-                if (isset($charge->balance_transaction) && !is_string($charge->balance_transaction)) {
-                    $feeInCents = $charge->balance_transaction->fee;
+                Log::info('calculateFees: Retrieved Charge object', (array)$charge);
+
+                $balanceTransaction = $charge->balance_transaction;
+
+                // Pokud je balance_transaction jen ID (string), načteme ho ručně
+                if (is_string($balanceTransaction)) {
+                    Log::info('calculateFees: Balance transaction is ID, fetching object...', ['id' => $balanceTransaction]);
+                    $balanceTransaction = $stripe->balanceTransactions->retrieve($balanceTransaction);
+                }
+
+                if ($balanceTransaction && isset($balanceTransaction->fee)) {
+                    $feeInCents = $balanceTransaction->fee;
                     $result['fee_amount'] = $feeInCents / 100;
                     $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
+                    Log::info('calculateFees: Fee and payout calculated', $result);
+                } else {
+                    Log::warning('calculateFees: Balance transaction data missing fee', ['bt' => (array)$balanceTransaction]);
                 }
+            } else {
+                Log::warning('calculateFees: latest_charge not set on PaymentIntent');
             }
         } catch (\Exception $e) {
-            Log::error('Error calculating fees: ' . $e->getMessage());
+            Log::error('Error calculating fees in calculateFees: ' . $e->getMessage(), ['paymentIntentId' => $paymentIntent->id]);
         }
 
         return $result;
