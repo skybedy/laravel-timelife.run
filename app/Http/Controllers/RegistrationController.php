@@ -234,6 +234,18 @@ class RegistrationController extends Controller
             $this->createPayout($payout);
         }
 
+        if ($event->type == 'transfer.created') {
+            $transfer = $event->data->object;
+
+            Log::info('✓ Webhook: transfer.created', [
+                'transfer_id' => $transfer->id,
+                'amount' => $transfer->amount,
+                'transfer_group' => $transfer->transfer_group ?? 'N/A',
+            ]);
+
+            $this->updatePaymentFeesFromTransfer($transfer);
+        }
+
         return response()->json(['status' => 'success'], 200);
     }
     public function success(Request $request, StripeClient $stripe)
@@ -726,6 +738,42 @@ class RegistrationController extends Controller
         } catch (\Exception $e) {
             // Zpracování obecných chyb
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Aktualizuje poplatky u existující platby na základě webhooku transfer.created
+     */
+    private function updatePaymentFeesFromTransfer($transfer)
+    {
+        if (!isset($transfer->transfer_group)) {
+            return;
+        }
+
+        // Očekáváme formát 'group_pi_...' -> získáme 'pi_...'
+        $paymentIntentId = str_replace('group_', '', $transfer->transfer_group);
+        
+        // Najdeme platbu
+        $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
+
+        if ($payment) {
+            // Transfer amount je v centech a je to ČISTÁ částka pro příjemce
+            $payoutAmount = $transfer->amount / 100;
+            
+            // Fee je rozdíl mezi celkovou částkou a tím, co šlo příjemci
+            $feeAmount = $payment->total_amount - $payoutAmount;
+
+            $payment->payout_amount = $payoutAmount;
+            $payment->fee_amount = $feeAmount;
+            $payment->save();
+            
+            Log::info('Updated payment fees via transfer.created webhook', [
+                'payment_id' => $payment->id,
+                'fee' => $feeAmount,
+                'payout' => $payoutAmount
+            ]);
+        } else {
+            Log::warning('Payment not found for transfer group (yet?): ' . $transfer->transfer_group);
         }
     }
 
