@@ -436,9 +436,10 @@ class RegistrationController extends Controller
                 'automatic_payment_methods' => [
                     'enabled' => true,
                 ],
+                'on_behalf_of' => $paymentRecipient->stripe_client_id, // Poplatky jdou na tento účet
+                'application_fee_amount' => 0, // Náš poplatek je 0, takže všechno ostatní jde příjemci
                 'transfer_data' => [
-                    'destination' => $paymentRecipient->stripe_client_id,
-                    // Amount nezadáváme - Stripe automaticky převede (Total - Stripe Fee)
+                    'destination' => 'self', // Peníze zůstanou na účtu, na kterém vznikl Charge (tj. Connected Account)
                 ],
                 'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
@@ -575,7 +576,16 @@ class RegistrationController extends Controller
             Log::info('calculateFees: PaymentIntent latest_charge: ' . ($paymentIntent->latest_charge ?? 'N/A'));
 
             if (isset($paymentIntent->latest_charge)) {
-                $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, ['expand' => ['balance_transaction']]);
+                $options = ['expand' => ['balance_transaction']];
+                $chargeId = $paymentIntent->latest_charge;
+                
+                // Pokud PaymentIntent používá on_behalf_of, musíme načíst Charge z pohledu Connected Accountu
+                if (isset($paymentIntent->on_behalf_of) && $paymentIntent->on_behalf_of) {
+                    $options['stripe_account'] = $paymentIntent->on_behalf_of;
+                    Log::info('calculateFees: Fetching Charge via Connected Account', ['account_id' => $paymentIntent->on_behalf_of]);
+                }
+
+                $charge = $stripe->charges->retrieve($chargeId, $options);
                 Log::info('calculateFees: Retrieved Charge object', (array)$charge);
 
                 $balanceTransaction = $charge->balance_transaction;
@@ -583,7 +593,11 @@ class RegistrationController extends Controller
                 // Pokud je balance_transaction jen ID (string), načteme ho ručně
                 if (is_string($balanceTransaction)) {
                     Log::info('calculateFees: Balance transaction is ID, fetching object...', ['id' => $balanceTransaction]);
-                    $balanceTransaction = $stripe->balanceTransactions->retrieve($balanceTransaction);
+                    $btOptions = [];
+                    if (isset($paymentIntent->on_behalf_of)) {
+                        $btOptions['stripe_account'] = $paymentIntent->on_behalf_of;
+                    }
+                    $balanceTransaction = $stripe->balanceTransactions->retrieve($balanceTransaction, $btOptions);
                 }
 
                 if ($balanceTransaction && isset($balanceTransaction->fee)) {
@@ -592,26 +606,7 @@ class RegistrationController extends Controller
                     $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
                     Log::info('calculateFees: Fee and payout calculated', $result);
                 } else {
-                    Log::warning('calculateFees: Balance transaction data missing fee or null on platform. Trying to find Transfer...');
-                    
-                    // Pokud chybí balance transaction (u Destination Charges), poplatky zjistíme z rozdílu mezi Charge a Transfer
-                    if (isset($paymentIntent->transfer_group)) {
-                        try {
-                            $transfers = $stripe->transfers->all(['transfer_group' => $paymentIntent->transfer_group, 'limit' => 1]);
-                            
-                            if (count($transfers->data) > 0) {
-                                $transfer = $transfers->data[0];
-                                // Transfer amount je částka, která odešla na connected account
-                                $result['payout_amount'] = $transfer->amount / 100;
-                                $result['fee_amount'] = ($paymentIntent->amount - $transfer->amount) / 100;
-                                Log::info('calculateFees: Fees calculated from Transfer object', $result);
-                            } else {
-                                Log::warning('calculateFees: No transfer found for group: ' . $paymentIntent->transfer_group);
-                            }
-                        } catch (\Exception $ex) {
-                            Log::warning('calculateFees: Failed to list transfers: ' . $ex->getMessage());
-                        }
-                    }
+                    Log::warning('calculateFees: Balance transaction data missing fee or null');
                 }
             } else {
                 Log::warning('calculateFees: latest_charge not set on PaymentIntent');
