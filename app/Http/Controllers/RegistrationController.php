@@ -580,7 +580,29 @@ class RegistrationController extends Controller
                     $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
                     Log::info('calculateFees: Fee and payout calculated', $result);
                 } else {
-                    Log::warning('calculateFees: Balance transaction data missing fee', ['bt' => (array)$balanceTransaction]);
+                    Log::warning('calculateFees: Balance transaction data missing fee or null on platform. Trying connected account...');
+                    
+                    // Fallback: Zkusit načíst charge přes connected account (pro případ on_behalf_of chování)
+                    if (isset($paymentIntent->transfer_data->destination)) {
+                        try {
+                            $connectedCharge = $stripe->charges->retrieve(
+                                $charge->id,
+                                ['expand' => ['balance_transaction']],
+                                ['stripe_account' => $paymentIntent->transfer_data->destination]
+                            );
+                            
+                            if (isset($connectedCharge->balance_transaction) && !is_string($connectedCharge->balance_transaction)) {
+                                $feeInCents = $connectedCharge->balance_transaction->fee;
+                                $result['fee_amount'] = $feeInCents / 100;
+                                $result['payout_amount'] = ($paymentIntent->amount - $feeInCents) / 100;
+                                Log::info('calculateFees: Fee and payout calculated via Connected Account', $result);
+                            } else {
+                                Log::warning('calculateFees: BT still missing on connected account');
+                            }
+                        } catch (\Exception $ex) {
+                            Log::warning('calculateFees: Failed to fetch via connected account: ' . $ex->getMessage());
+                        }
+                    }
                 }
             } else {
                 Log::warning('calculateFees: latest_charge not set on PaymentIntent');
