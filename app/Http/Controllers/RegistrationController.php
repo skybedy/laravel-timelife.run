@@ -437,7 +437,7 @@ class RegistrationController extends Controller
                     'enabled' => true,
                 ],
                 'on_behalf_of' => $paymentRecipient->stripe_client_id, // Poplatky jdou na tento účet a platba se vypořádá na něm
-                'application_fee_amount' => 0, // Náš poplatek je 0
+                // application_fee_amount vynecháváme, pokud je 0
                 // transfer_data nezadáváme - peníze zůstávají na účtu on_behalf_of
                 'statement_descriptor_suffix' => 'JDVORACKOVA',
                 'metadata' => [
