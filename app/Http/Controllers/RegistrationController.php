@@ -591,7 +591,7 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
     public function paymentSelection(Request $request)
     {
         $request->validate([
-            'amount' => 'required|integer|min:60|max:1000000',
+            'amount' => 'required|integer|min:50|max:1000000',
         ]);
 
         return view('donations.payment-selection', [
@@ -606,7 +606,7 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
     public function payWithCard(Request $request)
     {
         $request->validate([
-            'amount' => 'required|integer|min:60|max:1000000',
+            'amount' => 'required|integer|min:50|max:1000000',
             'donor_name' => 'required|string|max:255',
             'donor_email' => 'required|email|max:255',
         ]);
@@ -625,7 +625,7 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
     public function payWithGooglePay(Request $request)
     {
         $request->validate([
-            'amount' => 'required|integer|min:60|max:1000000',
+            'amount' => 'required|integer|min:50|max:1000000',
             'donor_name' => 'required|string|max:255',
             'donor_email' => 'required|email|max:255',
         ]);

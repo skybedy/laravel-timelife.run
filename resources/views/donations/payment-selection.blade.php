@@ -51,6 +51,9 @@
                 <!-- Výběr platební metody -->
                 <div>
                     <h3 class="font-semibold text-lg mb-4 text-center">Vyberte způsob platby</h3>
+                    <p class="px-6 pb-6 text-red-600 text-[0.8rem]">V případě, že používáte prohlížeč z Facebooku, který se obvykle otevírá po kliknutí na odkaz právě z něj, nebo Messengeru, je možné, že nebude fungovat Google Pay a Apple Pay a platbu je nutné dokončit kartou.<br>
+                        Pokud ale chcete platit pouze jednou z obou zmíněných metod, je potřebné si web otevřít ve standardním prohlížeči.
+                    </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
                         <!-- Platba kartou -->
