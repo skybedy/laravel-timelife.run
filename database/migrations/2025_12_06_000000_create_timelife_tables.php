@@ -115,37 +115,60 @@ return new class extends Migration
             });
         }
 
-        // Results (Pozor: bez primary key dle dumpu)
-        if (!Schema::hasTable('results')) {
-            Schema::create('results', function (Blueprint $table) {
-                $table->unsignedBigInteger('id')->nullable();
-                $table->unsignedBigInteger('registration_id')->nullable();
-                $table->date('finish_time_date');
-                $table->unsignedMediumInteger('finish_time_order')->nullable();
-                $table->time('finish_time')->nullable();
-                $table->unsignedInteger('finish_time_sec')->nullable();
-                $table->double('finish_distance_km')->nullable();
-                $table->string('pace_km')->nullable();
-                $table->string('pace_mile')->nullable();
-                $table->timestamps();
-            });
-        }
+// Results
+if (!Schema::hasTable('results')) {
+    Schema::create('results', function (Blueprint $table) {
+        // `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT + PRIMARY KEY
+        $table->id(); 
 
-        // Track Points (Pozor: bez primary key dle dumpu)
-        if (!Schema::hasTable('track_points')) {
-            Schema::create('track_points', function (Blueprint $table) {
-                $table->unsignedBigInteger('id')->nullable();
-                $table->unsignedInteger('user_id')->nullable();
-                $table->unsignedInteger('registration_id')->nullable();
-                $table->unsignedBigInteger('result_id')->nullable();
-                $table->double('latitude');
-                $table->double('longitude');
-                $table->unsignedBigInteger('time')->nullable();
-                $table->unsignedInteger('cadence')->nullable();
-                $table->double('altitude')->nullable();
-                $table->timestamps();
-            });
-        }
+        // `registration_id` + FOREIGN KEY s kaskádovým mazáním
+        $table->foreignId('registration_id')
+              ->constrained('registrations')
+              ->onDelete('cascade');
+
+        // Ostatní sloupce podle schématu
+        $table->date('finish_time_date');
+        $table->unsignedMediumInteger('finish_time_order')->nullable();
+        $table->time('finish_time')->nullable();
+        $table->unsignedInteger('finish_time_sec');
+        $table->double('finish_distance_km')->nullable();
+        $table->double('finish_distance_mile')->nullable();
+        $table->string('pace_km');
+        $table->string('pace_mile');
+
+        // `created_at` a `updated_at`
+        $table->timestamps();
+    });
+}
+
+   // Track Points
+if (!Schema::hasTable('track_points')) {
+    Schema::create('track_points', function (Blueprint $table) {
+        // `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT + PRIMARY KEY
+        $table->id();
+
+        // `user_id` int(10) unsigned NOT NULL
+        $table->unsignedInteger('user_id');
+
+        // `registration_id` int(10) unsigned DEFAULT NULL
+        $table->unsignedInteger('registration_id')->nullable();
+
+        // `result_id` bigint(20) unsigned NOT NULL + FOREIGN KEY
+        $table->foreignId('result_id')
+              ->constrained('results')
+              ->onDelete('cascade'); // přidáno cascade pro integritu, v SQL není explicitně, ale doporučuje se
+
+        $table->double('latitude');
+        $table->double('longitude');
+        $table->unsignedBigInteger('time')->nullable();
+        $table->unsignedInteger('cadence')->nullable();
+        $table->double('altitude')->nullable();
+        $table->timestamps();
+
+        // UNIQUE KEY `track_points_unique` (`user_id`,`registration_id`,`latitude`,`longitude`,`time`)
+        $table->unique(['user_id', 'registration_id', 'latitude', 'longitude', 'time'], 'track_points_unique');
+    });
+}
 
         // Sessions
         if (!Schema::hasTable('sessions')) {

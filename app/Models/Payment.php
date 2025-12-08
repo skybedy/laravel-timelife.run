@@ -17,6 +17,7 @@ class Payment extends Model
         'payment_recipient_id',
         'stripe_session_id',
         'payment_reference_id',
+        'is_live',
     ];
 
     /**

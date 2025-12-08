@@ -177,7 +177,7 @@
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7 text-red-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span>I ta nejmenší částka má svůj dopad, naše běžecká komunita jen ve FB skupině Běžci běžcům čítá téměř 70.000 lidí a pokud by jen cca 2% z nás věnovalo zcela zanedbatelných 50Kč, Jitka vybere prostřednictvím tohoto kanálu okolo 50.000 Kč na věc, jejíž existenci si pravděpodobně většina z nás nechce ani příliš představovat.</span>
+                                    <span>I ta nejmenší částka má svůj dopad, počet běžců v různých českých FB skupinách je více než 100.000 lidí a pokud by jen cca 1% z nás věnovalo zcela zanedbatelných 60 Kč, Jitka vybere prostřednictvím tohoto kanálu okolo 50.000 Kč na věc, jejíž existenci si pravděpodobně většina z nás nechce ani příliš představovat.</span>
                                 </p>
 
                                 <!-- Oddělení mezi odstavci -->
@@ -211,9 +211,9 @@
                                         <input
                                             type="number"
                                             name="amount"
-                                            min="50"
+                                            min="60"
                                             step="1"
-                                            placeholder="Min. 50 Kč"
+                                            placeholder="Min. 60 Kč"
                                             required
                                             class="w-full sm:w-64 lg:w-44 px-4 sm:px-6 py-3 sm:py-4 rounded-lg text-gray-900 font-bold text-xl sm:text-2xl focus:outline-none focus:ring-2 focus:ring-white text-center"
                                         >

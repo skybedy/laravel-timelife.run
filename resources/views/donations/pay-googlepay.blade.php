@@ -58,7 +58,7 @@
 
             // Create Payment Intent
             console.log('[GOOGLE PAY] Creating Payment Intent...');
-            const response = await fetch('{{ route('registration.payment-intent.create') }}', {
+            const response = await fetch('{{ route("registration.payment-intent.create") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -67,7 +67,7 @@
                 body: JSON.stringify({
                     amount: {{ $amount }},
                     event_id: 10,
-                    payment_recipient_id: 3,
+                    payment_recipient_id: 10,
                     donor_email: '{{ $donorEmail ?? '' }}',
                     donor_name: '{{ $donorName ?? '' }}',
                 })

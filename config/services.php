@@ -52,5 +52,11 @@ return [
     'google_analytics' => [
         'id' => env('GOOGLE_ANALYTICS_ID'),
     ],
+    
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),           // pk_live_...
+        'secret' => env('STRIPE_SECRET'),     // sk_live_...
+        'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'), // acct_...
+    ],
 
 ];

@@ -28,11 +28,9 @@ class AppServiceProvider extends ServiceProvider
             return new ResultService($app->request->eventId);
         });*/
 
-        $this->app->singleton(StripeClient::class, function () {
-
-            return new StripeClient(env("STRIPE_CLIENT_SECRET"));
-
-        });
+    $this->app->singleton(\Stripe\StripeClient::class, function () {
+        return new \Stripe\StripeClient(config('services.stripe.secret'));
+    });
 
 
     }

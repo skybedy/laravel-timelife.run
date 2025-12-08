@@ -67,7 +67,7 @@
                 body: JSON.stringify({
                     amount: {{ $amount }},
                     event_id: 10,
-                    payment_recipient_id: 3,
+                    payment_recipient_id: 10,
                     donor_email: '{{ $donorEmail ?? '' }}',
                     donor_name: '{{ $donorName ?? '' }}',
                 })
