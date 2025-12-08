@@ -574,16 +574,17 @@ class RegistrationController extends Controller
             Log::info('calculateFees: PaymentIntent latest_charge: ' . ($paymentIntent->latest_charge ?? 'N/A'));
 
             if (isset($paymentIntent->latest_charge)) {
-                $options = ['expand' => ['balance_transaction']];
+                $params = ['expand' => ['balance_transaction']];
+                $opts = [];
                 $chargeId = $paymentIntent->latest_charge;
                 
                 // Pokud PaymentIntent používá on_behalf_of, musíme načíst Charge z pohledu Connected Accountu
                 if (isset($paymentIntent->on_behalf_of) && $paymentIntent->on_behalf_of) {
-                    $options['stripe_account'] = $paymentIntent->on_behalf_of;
+                    $opts['stripe_account'] = $paymentIntent->on_behalf_of;
                     Log::info('calculateFees: Fetching Charge via Connected Account', ['account_id' => $paymentIntent->on_behalf_of]);
                 }
 
-                $charge = $stripe->charges->retrieve($chargeId, $options);
+                $charge = $stripe->charges->retrieve($chargeId, $params, $opts);
                 Log::info('calculateFees: Retrieved Charge object', (array)$charge);
 
                 $balanceTransaction = $charge->balance_transaction;
@@ -591,11 +592,13 @@ class RegistrationController extends Controller
                 // Pokud je balance_transaction jen ID (string), načteme ho ručně
                 if (is_string($balanceTransaction)) {
                     Log::info('calculateFees: Balance transaction is ID, fetching object...', ['id' => $balanceTransaction]);
-                    $btOptions = [];
+                    $btParams = [];
+                    $btOpts = [];
+                    
                     if (isset($paymentIntent->on_behalf_of)) {
-                        $btOptions['stripe_account'] = $paymentIntent->on_behalf_of;
+                        $btOpts['stripe_account'] = $paymentIntent->on_behalf_of;
                     }
-                    $balanceTransaction = $stripe->balanceTransactions->retrieve($balanceTransaction, $btOptions);
+                    $balanceTransaction = $stripe->balanceTransactions->retrieve($balanceTransaction, $btParams, $btOpts);
                 }
 
                 if ($balanceTransaction && isset($balanceTransaction->fee)) {
