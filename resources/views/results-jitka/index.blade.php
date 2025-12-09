@@ -188,38 +188,23 @@
     function shareResultOnFacebook(resultId) {
         const url = '{{ url('results-jitka') }}/' + resultId;
 
-        // Detekce mobilního zařízení
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Facebook Sharer - starší API bez nutnosti app_id
+        // Nevyžaduje registrovanou doménu, funguje i na localhost
+        const shareUrl = 'https://www.facebook.com/sharer/sharer.php?' +
+            'u=' + encodeURIComponent(url) +
+            '&display=popup';
 
-        if (isMobile) {
-            // Na mobilu použijeme Share Dialog
-            const shareUrl = 'https://www.facebook.com/dialog/share?' +
-                'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
-                'display=touch&' +
-                'href=' + encodeURIComponent(url) +
-                '&redirect_uri=' + encodeURIComponent(url);
+        // Otevře popup okno
+        const width = 650;
+        const height = 450;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
 
-            window.location.href = shareUrl;
-        } else {
-            // Na desktopu použijeme Feed Dialog - má více možností
-            const shareUrl = 'https://www.facebook.com/dialog/feed?' +
-                'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
-                'display=popup&' +
-                'link=' + encodeURIComponent(url) +
-                '&redirect_uri=' + encodeURIComponent(url);
-
-            // Otevře popup okno
-            const width = 650;
-            const height = 450;
-            const left = (screen.width / 2) - (width / 2);
-            const top = (screen.height / 2) - (height / 2);
-
-            window.open(
-                shareUrl,
-                'facebook-share-dialog',
-                'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
-            );
-        }
+        window.open(
+            shareUrl,
+            'facebook-share-dialog',
+            'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
+        );
     }
 </script>
 </body>
