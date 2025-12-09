@@ -2,6 +2,16 @@
 
 @section('title', '| Výsledky')
 
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Výsledky Jitky Dvořáčkové - TimeLife.run</title>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body>
 <x-app-layout>
     <div class="pb-5">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -80,6 +90,7 @@
                                 <th class="border-none text-center px-4 py-3">Místo/Mapa</th>
                                 <th class="border-none text-center px-4 py-3">Tempo</th>
                                 <th class="border-none text-center px-4 py-3">Čas</th>
+                                <th class="border-none text-center px-4 py-3">Akce</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -95,6 +106,25 @@
                                     </td>
                                     <td class="border text-center px-4 py-3">{{ $result->pace_km }}</td>
                                     <td class="border text-center px-4 py-3 font-semibold">{{ $result->finish_time }}</td>
+                                    <td class="border px-4 py-3">
+                                        <div class="flex justify-center gap-2">
+                                            <a href="{{ route('results-jitka.show', $result->id) }}"
+                                               class="text-gray-600 hover:text-gray-900 transition-colors"
+                                               title="Zobrazit detail">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </a>
+                                            <button onclick="shareResultOnFacebook({{ $result->id }})"
+                                                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                                                    title="Sdílet na Facebooku">
+                                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -108,6 +138,7 @@
                                 <th class="border-none text-center px-2 py-2">Map</th>
                                 <th class="border-none text-center px-2 py-2">Tempo</th>
                                 <th class="border-none text-center px-2 py-2">Čas</th>
+                                <th class="border-none text-center px-2 py-2">Akce</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -123,6 +154,25 @@
                                     </td>
                                     <td class="border text-center px-2 py-2">{{ $result->pace_km }}</td>
                                     <td class="border text-center px-2 py-2">{{ $result->finish_time }}</td>
+                                    <td class="border px-2 py-2">
+                                        <div class="flex justify-center gap-1">
+                                            <a href="{{ route('results-jitka.show', $result->id) }}"
+                                               class="text-gray-600"
+                                               title="Detail">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </a>
+                                            <button onclick="shareResultOnFacebook({{ $result->id }})"
+                                                    class="text-blue-600"
+                                                    title="Facebook">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -133,3 +183,30 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    function shareResultOnFacebook(resultId) {
+        const url = '{{ url('results-jitka') }}/' + resultId;
+
+        // Facebook Share Dialog - podporuje sdílení do skupin
+        const shareUrl = 'https://www.facebook.com/dialog/share?' +
+            'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
+            'display=popup&' +
+            'href=' + encodeURIComponent(url) +
+            '&redirect_uri=' + encodeURIComponent(url);
+
+        // Otevře popup okno
+        const width = 650;
+        const height = 450;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
+
+        window.open(
+            shareUrl,
+            'facebook-share-dialog',
+            'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
+        );
+    }
+</script>
+</body>
+</html>

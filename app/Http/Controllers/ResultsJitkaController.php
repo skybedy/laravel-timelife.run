@@ -51,4 +51,28 @@ class ResultsJitkaController extends Controller
             'avgPace' => $avgPace ?? '0:00'
         ]);
     }
+
+    public function show($id)
+    {
+        // Získání konkrétního výsledku
+        $result = Result::where('registration_id', 131)->findOrFail($id);
+
+        // Získání všech výsledků pro registration_id 131 pro určení pořadí
+        $allResults = Result::where('registration_id', 131)
+            ->orderBy('finish_time_date')
+            ->orderBy('finish_time')
+            ->get();
+
+        $raceNumber = $allResults->search(function($item) use ($id) {
+            return $item->id == $id;
+        }) + 1;
+
+        $totalRaces = $allResults->count();
+
+        return view('results-jitka.show', [
+            'result' => $result,
+            'raceNumber' => $raceNumber,
+            'totalRaces' => $totalRaces
+        ]);
+    }
 }
