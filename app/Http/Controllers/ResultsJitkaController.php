@@ -100,7 +100,7 @@ class ResultsJitkaController extends Controller
     // --- VÝPOČET STATISTIK ---
 
     // Celkový počet km (počet půlmaratonů × 21.0975 km)
-    $totalKm = number_format($raceNumber * 21.0975, 2, ',', ' ');
+    $totalKm = number_format($raceNumber * 21.0975, 2, ',', '');
 
     // Součet časů všech půlmaratonů (do aktuálního závodu včetně)
     $completedResults = $allResults->take($raceNumber);
@@ -200,7 +200,7 @@ class ResultsJitkaController extends Controller
 
      imagettftext($image, 22, 0, 940, 442, $whiteColor, $fontPath, "CELKEM");
 
-    $totalKmLength = strlen($totalKm);
+     $totalKmLength = strlen($totalKm);
 
     // Nastavení levého okraje podle počtu znaků
     switch ($totalKmLength) {
@@ -220,7 +220,7 @@ class ResultsJitkaController extends Controller
             $marginLeft = 815;
             break;
         case 7:
-            $marginLeft = 804;
+            $marginLeft = 805;
             break;
         default:
             $marginLeft = 0;
