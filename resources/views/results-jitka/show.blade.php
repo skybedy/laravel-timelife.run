@@ -5,7 +5,8 @@
     $finishTime = substr($result->finish_time, 1);
     $title = "Půlmaraton #{$raceNumber}/{$totalRaces} - Jitka Dvořáčková";
     $description = "Datum: {$dateFormatted} | Čas: {$finishTime} | Tempo: {$result->pace_km}/km";
-    $currentUrl = route('results-jitka.show', $result->id);
+    $currentUrl = url()->current();
+    $ogImageUrl = request()->getSchemeAndHttpHost() . route('results-jitka.og-image', $result->id, false);
 @endphp
 
 @section('title', "| {$title}")
@@ -22,6 +23,9 @@
     <meta property="og:url" content="{{ $currentUrl }}">
     <meta property="og:title" content="{{ $title }}">
     <meta property="og:description" content="{{ $description }}">
+    <meta property="og:image" content="{{ $ogImageUrl }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="TimeLife.run">
 
     <!-- Twitter Card Meta Tags -->
