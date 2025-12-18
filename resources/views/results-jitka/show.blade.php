@@ -5,6 +5,10 @@
     $finishTime = substr($result->finish_time, 1);
     $title = "Půlmaraton #{$raceNumber}/{$totalRaces} - Jitka Dvořáčková";
     $description = "Datum: {$dateFormatted} | Čas: {$finishTime} | Tempo: {$result->pace_km}/km";
+    
+    $title = "Jitka Dvořáčková";
+    $description = "100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
+
     $currentUrl = url()->current();
     $ogImageUrl = request()->getSchemeAndHttpHost() . route('results-jitka.og-image', $result->id, false);
 @endphp
