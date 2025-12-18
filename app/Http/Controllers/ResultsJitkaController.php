@@ -165,98 +165,93 @@ class ResultsJitkaController extends Controller
     // Jméno
    // imagettftext($image, 40, 0, 60, 200, $lightGrayColor, $fontPath, "Jitka Dvorackova");
 
- imagettftext($image, 22, 0, 120, 442, $whiteColor, $fontPath, "1/2maraton #{$raceNumber}");
+    //Hlavni nadpisy
+    imagettftext($image, 24, 0, 106, 430, $whiteColor, $fontPath, "1/2maraton #{$raceNumber}");
+    imagettftext($image, 24, 0, 500, 430, $whiteColor, $fontPath, "Dokončeno");
+    imagettftext($image, 24, 0, 880, 430, $whiteColor, $fontPath, "CELKEM");
 
-  imagettftext($image, 22, 0, 545, 442, $whiteColor, $fontPath, "Dokončeno");
 
-
+   
+    // zeleny obdelnik
     // Datum
-    imagettftext($image, 18, 0, 64, 522, $whiteColor, $fontPath, "{$dateFormatted}");
-    // Bílá linka (podtržení)
-    imageline($image, 60, 528, 142, 528, $whiteColor);
-    imagettftext($image, 18, 0, 86, 552, $whiteColor, $fontPath, "{$yearFormatted}");
+    imagettftext($image, 18, 0, 56, 516, $whiteColor, $fontPath, "{$dateFormatted}");
+    imageline($image, 54, 522, 136, 522, $whiteColor);
+    imagettftext($image, 18, 0, 80, 546, $whiteColor, $fontPath, "{$yearFormatted}");
 
     // Čas
-    imagettftext($image, 18, 0, 226, 522, $whiteColor, $fontPath, "{$finishTime}");
-    imageline($image, 214, 528, 296, 528, $whiteColor);
-     imagettftext($image, 18, 0, 238, 552, $whiteColor, $fontPath, "{$finishTimeSec}");
+    imagettftext($image, 18, 0, 210, 516, $whiteColor, $fontPath, "{$finishTime}");
+    imageline($image, 198, 522, 280, 522, $whiteColor);
+     imagettftext($image, 18, 0, 222, 546, $whiteColor, $fontPath, "{$finishTimeSec}");
+   
 
     // Tempo
-        imagettftext($image, 18, 0, 386, 522, $whiteColor, $fontPath, "{$result->pace_km}");
-        imageline($image, 570, 528, 700, 528, $whiteColor);
-     
-    imagettftext($image, 18, 0, 395, 552, $whiteColor, $fontPath, "km");
+    imagettftext($image, 18, 0, 352, 516, $whiteColor, $fontPath, "{$result->pace_km}");
+    imageline($image, 338, 522, 422, 522, $whiteColor);
+    imagettftext($image, 18, 0, 362, 546, $whiteColor, $fontPath, "km");
 
-    $raceNumber < 10 ? $leftMargin = 612 : $leftMargin = 590; 
-    
+    //cerveny obdelnik
+    $raceNumber < 10 ? $leftMargin = 574 : $leftMargin = 552; 
     imagettftext($image, 50, 0, $leftMargin, 522, $whiteColor, $fontPath, "{$raceNumber}");
-    
-    imageline($image, 378, 528, 452, 528, $whiteColor);
-    imagettftext($image, 50, 0, 566, 586, $whiteColor, $fontPath, "100");
+    imageline($image, 530, 528, 660, 528, $whiteColor);
+    imagettftext($image, 50, 0, 530, 586, $whiteColor, $fontPath, "100");
 
 
-
-    //Celkově
-
-     imagettftext($image, 22, 0, 940, 442, $whiteColor, $fontPath, "CELKEM");
-
+    //Modry obdelnik
      $totalKmLength = strlen($totalKm);
 
     // Nastavení levého okraje podle počtu znaků
     switch ($totalKmLength) {
         case 2:
-            $marginLeft = 843;
+            $marginLeft = 801;
             break;
         case 3:
-            $marginLeft = 834;
+            $marginLeft = 792;
             break;
         case 4:
-            $marginLeft = 826;
+            $marginLeft = 784;
             break;
         case 5:
-            $marginLeft = 822;
+            $marginLeft = 780;
             break;
         case 6:
-            $marginLeft = 815;
+            $marginLeft = 773;
             break;
         case 7:
-            $marginLeft = 805;
+            $marginLeft = 763;
             break;
         default:
             $marginLeft = 0;
             break;
     }
 
-    imagettftext($image, 18, 0, $marginLeft, 534, $whiteColor, $fontPath, "{$totalKm}");
-
+    imagettftext($image, 18, 0, $marginLeft, 528, $whiteColor, $fontPath, "{$totalKm}");
     // Nastavení levého okraje pro celkový čas podle počtu znaků
     $totalTimeLength = strlen($totalTime);
 
     switch ($totalTimeLength) {
         case 4:
-            $marginLeft = 984;
+            $marginLeft = 930;
             break;
         case 5:
-            $marginLeft = 976;
+            $marginLeft = 922;
             break;
         case 6:
-            $marginLeft = 966;
+            $marginLeft = 912;
             break;
         default:
             $marginLeft = 0;
             break;
     }
 
-    imagettftext($image, 18, 0, $marginLeft, 522, $whiteColor, $fontPath, "{$totalTime}");
-    imageline($image, 972, 528, 1054, 528, $whiteColor);
-    imagettftext($image, 18, 0, 998, 552, $whiteColor, $fontPath, "{$totalTimeSec}");
+    //čas
+    imagettftext($image, 18, 0, $marginLeft, 516, $whiteColor, $fontPath, "{$totalTime}");
+    imageline($image, 914, 522, 1006, 522, $whiteColor);
+    imagettftext($image, 18, 0, 945, 546, $whiteColor, $fontPath, "{$totalTimeSec}");
 
-    //celkovw tempo
-     
-    imagettftext($image, 18, 0, 1145, 522, $whiteColor, $fontPath, "{$avgPace}");
-        imageline($image, 1140, 528, 1208, 528, $whiteColor);
-     
-    imagettftext($image, 18, 0, 1156, 552, $whiteColor, $fontPath, "km");
+    //tempo
+    imagettftext($image, 18, 0, 1072, 516, $whiteColor, $fontPath, "{$avgPace}");
+    imageline($image, 1058, 522, 1146, 522, $whiteColor);
+    imagettftext($image, 18, 0, 1082, 546, $whiteColor, $fontPath, "km");
     
  
 
