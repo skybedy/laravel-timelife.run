@@ -188,11 +188,12 @@
     function shareResultOnFacebook(resultId) {
         const url = '{{ url('results-jitka') }}/' + resultId;
 
-        // Facebook Sharer - starší API bez nutnosti app_id
-        // Nevyžaduje registrovanou doménu, funguje i na localhost
-        const shareUrl = 'https://www.facebook.com/sharer/sharer.php?' +
-            'u=' + encodeURIComponent(url) +
-            '&display=popup';
+        // Facebook Share Dialog - podporuje sdílení do skupin
+        const shareUrl = 'https://www.facebook.com/dialog/share?' +
+            'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
+            'display=popup&' +
+            'href=' + encodeURIComponent(url) +
+            '&redirect_uri=' + encodeURIComponent(url);
 
         // Otevře popup okno
         const width = 650;

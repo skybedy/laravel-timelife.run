@@ -8,8 +8,8 @@
     $description = "Datum: {$dateFormatted} | Čas: {$finishTime} | Tempo: {$result->pace_km}/km";
     
     // Titulek a popis pro sociální sítě
-    $socialTitle = "Jitka Dvořáčková, 1/2maraton #{$raceNumber} | Čas: {$finishTime}"";
-    $socialDescription = "Charitativní běžecká akce 100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
+    $socialTitle = "Jitka Dvořáčková, 1/2maraton #{$raceNumber} | Čas: {$finishTime}";
+    $socialDescription = "100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
     
 
     // DŮLEŽITÉ: Aby Facebook načetl správný obrázek, musí URL ukazovat na tuto stránku
@@ -231,10 +231,14 @@
 
     <script>
         function shareOnFacebook(url) {
-            const shareUrl = 'https://www.facebook.com/sharer/sharer.php?' +
-                'u=' + encodeURIComponent(url) +
-                '&display=popup';
+            // Facebook Share Dialog - podporuje sdílení do skupin
+            const shareUrl = 'https://www.facebook.com/dialog/share?' +
+                'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
+                'display=popup&' +
+                'href=' + encodeURIComponent(url) +
+                '&redirect_uri=' + encodeURIComponent(url);
 
+            // Otevře popup okno
             const width = 650;
             const height = 450;
             const left = (screen.width / 2) - (width / 2);
