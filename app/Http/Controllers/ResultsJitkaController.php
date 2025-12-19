@@ -176,7 +176,7 @@ class ResultsJitkaController extends Controller
     // zeleny obdelnik
     // Datum
     imagettftext($image, 18, 0, 56, 516, $whiteColor, $fontPath, "{$dateFormatted}");
-    imagesetthickness($image, 2);
+    imagesetthickness($image, 3);
     imageline($image, 54, 522, 136, 522, $whiteColor);
     imagettftext($image, 18, 0, 80, 546, $whiteColor, $fontPath, "{$yearFormatted}");
 
