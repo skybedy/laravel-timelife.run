@@ -54,8 +54,7 @@ class ResultsJitkaController extends Controller
 
     public function show($id)
     {
-        return redirect('https://liferun.cz');
-        /*
+        
         // Získání konkrétního výsledku
         $result = Result::where('registration_id', 131)->findOrFail($id);
 
@@ -75,7 +74,7 @@ class ResultsJitkaController extends Controller
             'result' => $result,
             'raceNumber' => $raceNumber,
             'totalRaces' => $totalRaces
-        ]);*/
+        ]);
     }
 
    public function ogImage($id)

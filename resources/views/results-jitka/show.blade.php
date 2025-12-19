@@ -8,8 +8,9 @@
     $description = "Datum: {$dateFormatted} | Čas: {$finishTime} | Tempo: {$result->pace_km}/km";
     
     // Titulek a popis pro sociální sítě
-    $socialTitle = "Jitka Dvořáčková, 100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
-    $socialDescription = "Půlmaraton #{$raceNumber} | Čas: {$finishTime}";
+    $socialTitle = "Jitka Dvořáčková, 1/2maraton #{$raceNumber} | Čas: {$finishTime}"";
+    $socialDescription = "Charitativní běžecká akce 100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
+    
 
     // DŮLEŽITÉ: Aby Facebook načetl správný obrázek, musí URL ukazovat na tuto stránku
     $currentUrl = url()->current();
@@ -36,10 +37,6 @@
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="LifeRun.cz">
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $socialTitle }}">
-    <meta name="twitter:description" content="{{ $socialDescription }}">
-    <meta name="twitter:image" content="{{ $ogImageUrl }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -50,15 +47,24 @@
 
                 <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
                     <div class="text-center">
-                        <a href="{{ route('results-jitka.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                            Zpět na všechny výsledky
-                        </a>
+                        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
+                            <a href="{{ route('results-jitka.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                </svg>
+                                Zpět na všechny výsledky
+                            </a>
+                            <span class="hidden sm:inline text-gray-400">|</span>
+                            <a href="{{ route('index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                                Hlavní stránka
+                            </a>
+                        </div>
 
                         <h1 class="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
-                            Půlmaraton #{{ $raceNumber }}/{{ $totalRaces }}
+                            Půlmaraton #{{ $raceNumber }}/100
                         </h1>
                         <p class="text-2xl text-gray-700 mb-2">
                             Jitka Dvořáčková
@@ -114,6 +120,97 @@
                     </div>
                 </div>
 
+                <!-- Box s platbou -->
+                <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Příspěvek na dětský hospic Dům pro Julii</h2>
+
+                    <!-- Šedý box s textem a formulářem -->
+                    <div class="bg-gray-700 rounded-2xl p-6 sm:p-8">
+
+                        <!-- Motivační text -->
+                        <div class="text-white text-lg sm:text-xl leading-relaxed mb-6 space-y-4">
+                            <p class="flex items-start gap-3">
+                                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-red-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>I ta nejmenší částka má svůj dopad, počet běžců v různých českých FB skupinách je více než 100.000 lidí a pokud by jen cca 1% z nás věnovalo zcela zanedbatelných 50 Kč, Jitka vybere prostřednictvím tohoto kanálu okolo 50.000 Kč na věc, jejíž existenci si pravděpodobně většina z nás nechce ani příliš představovat.</span>
+                            </p>
+
+                            <!-- Oddělení mezi odstavci -->
+                            <div class="border-t border-white/20 my-4"></div>
+
+                            <p class="flex items-start gap-3">
+                                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <span>Kromě nezbytných poplatků platebnímu operátorovi jdou veškeré prostředky jeho prostřednictvím na účet <strong>2101782768/2010</strong> organizace Dům pro Julii, a jak hlavní protagonistka Jitka Dvořáčková, tak provozovatel této webové stránky si z ní nenechávají ani haléř.</span>
+                            </p>
+                        </div>
+
+                        <!-- Oddělení -->
+                        <div class="border-t border-white/30 my-6"></div>
+
+                        <!-- Platební formulář - Přizpůsobený pro užší stránku -->
+                        <div class="w-full">
+                            <form action="{{ route('donation.payment-selection') }}" method="GET">
+                                <div class="flex flex-col items-center gap-4">
+                                    <!-- Ikona + Label -->
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                        </svg>
+                                        <label class="text-xl sm:text-2xl text-white font-bold whitespace-nowrap">Chci přispět:</label>
+                                    </div>
+
+                                    <!-- Input -->
+                                    <input
+                                        type="number"
+                                        name="amount"
+                                        min="50"
+                                        step="1"
+                                        placeholder="Min. 50 Kč"
+                                        required
+                                        class="w-full max-w-xs px-6 py-4 rounded-lg text-gray-900 font-bold text-2xl focus:outline-none focus:ring-2 focus:ring-white text-center"
+                                    >
+
+                                    <!-- Payment Icons -->
+                                    <div class="flex flex-wrap items-center justify-center gap-2">
+                                        <!-- Stripe Badge -->
+                                        <div class="bg-white rounded h-10 px-3 flex items-center justify-center">
+                                            <svg class="h-5 w-auto" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.76l.08 1.02a4.7 4.7 0 0 1 3.23-1.29c2.9 0 5.62 2.6 5.62 7.4 0 5.23-2.7 7.6-5.65 7.6zM40 8.95c-.95 0-1.54.34-1.97.81l.02 6.12c.4.44.98.78 1.95.78 1.52 0 2.54-1.65 2.54-3.87 0-2.15-1.04-3.84-2.54-3.84zM28.24 5.57h4.13v14.44h-4.13V5.57zm0-4.7L32.37 0v3.36l-4.13.88V.88zm-4.32 9.35v9.79H19.8V5.57h3.7l.12 1.22c1-1.77 3.07-1.41 3.62-1.22v3.79c-.52-.17-2.29-.43-3.32.86zm-8.55 4.72c0 2.43 2.6 1.68 3.12 1.46v3.36c-.55.3-1.54.54-2.89.54a4.15 4.15 0 0 1-4.27-4.24l.01-13.17 4.02-.86v3.54h3.14V9.1h-3.13v5.85zm-4.91.7c0 2.97-2.31 4.66-5.73 4.66a11.2 11.2 0 0 1-4.46-.93v-3.93c1.38.75 3.10 1.31 4.46 1.31.92 0 1.53-.24 1.53-1C6.26 13.77 0 14.51 0 9.95 0 7.04 2.28 5.3 5.62 5.3c1.36 0 2.72.2 4.09.75v3.88a9.23 9.23 0 0 0-4.1-1.06c-.86 0-1.44.25-1.44.9 0 1.85 6.29.97 6.29 5.88z" fill="#374151"/>
+                                            </svg>
+                                        </div>
+
+                                        <!-- Visa/Card Badge -->
+                                        <div class="bg-white rounded h-10 px-2 flex items-center justify-center">
+                                            <img src="{{ asset('visa.png') }}" alt="Visa" class="h-7 w-auto">
+                                        </div>
+
+                                        <!-- Google Pay Badge -->
+                                        <div class="bg-white rounded h-10 px-1 flex items-center justify-center">
+                                            <img src="{{ asset('gpay-icon.png') }}" alt="Google Pay" class="h-8 w-auto">
+                                        </div>
+
+                                        <!-- Apple Pay Badge -->
+                                        <div class="bg-white rounded h-10 flex items-center justify-center px-2">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" class="h-6 w-auto">
+                                        </div>
+                                    </div>
+
+                                    <!-- Tlačítko -->
+                                    <button
+                                        type="submit"
+                                        class="w-full max-w-xs bg-white text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-colors text-xl px-8 py-4"
+                                    >
+                                        Odeslat
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">Sdílet výsledek</h2>
 
@@ -125,16 +222,6 @@
                             </svg>
                             Sdílet na Facebooku
                         </button>
-
-                        <a href="https://twitter.com/intent/tweet?text={{ urlencode($socialTitle . ' - ' . $socialDescription) }}&url={{ urlencode($currentUrl) }}"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                            </svg>
-                            Sdílet na Twitteru
-                        </a>
                     </div>
                 </div>
 

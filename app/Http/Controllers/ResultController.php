@@ -53,15 +53,15 @@ class ResultController extends Controller
 
     public function resultMap(Request $request, TrackPoint $trackPoint)
     {
-        $data = '';
-        foreach ($trackPoint::select('latitude', 'longitude')->where('result_id', $request->resultId)->get() as $trackPoint) {
-            $data .= '<trkpt lat="'.$trackPoint->latitude.'" lon="'.$trackPoint->longitude.'">';
-            $data .= '<ele></ele>';
-            $data .= '<time></time>';
-            $data .= '</trkpt>';
-        }
+        $result = Result::findOrFail($request->resultId);
+        $trackPoints = $trackPoint::select('latitude', 'longitude')
+            ->where('result_id', $request->resultId)
+            ->get();
 
-        return response()->json($data);
+        return view('result.map', [
+            'result' => $result,
+            'trackPoints' => $trackPoints
+        ]);
     }
 
 }

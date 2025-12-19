@@ -16,9 +16,13 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-6 lg:space-x-8 sm:-my-px sm:ms-10 md:flex bg-red-70">
+                <div class="hidden space-x-6 lg:space-x-8 sm:ms-10 md:flex items-center bg-red-70">
+                    <x-nav-link :href="route('index')" :active="request()->routeIs('index')" class="text-lg lg:text-xl text-gray-600">
+                        {{ __('Hlavní strana') }}
+                    </x-nav-link>
+
                     <x-nav-link :href="route('story')" :active="request()->routeIs('story')" class="text-lg lg:text-xl text-gray-600">
-                        {{ __('Příběh') }}
+                        {{ __('Jitčin běžecký příběh') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('results-jitka.index')" :active="request()->routeIs('results-jitka.index')" class="text-lg lg:text-xl text-gray-600">
@@ -64,7 +68,7 @@
             </div>
 
             <!-- Hamburger -->
-            <div class="flex items-center md:hidden">
+            <div class="flex items-center md:hidden mr-2 sm:mr-0">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-gray-600 focus:outline-none focus:bg-gray-600 focus:text-white transition duration-150 ease-in-out bg-gray-700">
                     <svg class="h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -79,8 +83,14 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden md:hidden">
 
         <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="route('index')" :active="request()->routeIs('index')">
+                {{ __('Hlavní strana') }}
+            </x-responsive-nav-link>
+        </div>
+
+        <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('story')" :active="request()->routeIs('story')">
-                {{ __('Příběh') }}
+                {{ __('Jitčin běžecký příběh') }}
             </x-responsive-nav-link>
         </div>
 
@@ -91,16 +101,12 @@
         </div>
 
         <!-- Responsive Settings Options -->
+        @auth
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
-              @auth
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->firstname }} {{ Auth::user()->lastname }}</div>
-               @else
-                    <a class="border-solid border border-red-600 hover:bg-red-700 hover:text-white text-red-700 py-2 px-4 rounded" href="{{ route('login') }}">Přihlásit se</a>
-              @endif
             </div>
 
-            @auth
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profil') }}
@@ -120,7 +126,7 @@
                     </x-responsive-nav-link>
                 </form>
             </div>
-            @endauth
         </div>
+        @endauth
     </div>
 </nav>
