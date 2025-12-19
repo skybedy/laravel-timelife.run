@@ -3,14 +3,19 @@
 @php
     $dateFormatted = date('d.m.Y', strtotime($result->finish_time_date));
     $finishTime = substr($result->finish_time, 1);
+    
     $title = "Půlmaraton #{$raceNumber}/{$totalRaces} - Jitka Dvořáčková";
     $description = "Datum: {$dateFormatted} | Čas: {$finishTime} | Tempo: {$result->pace_km}/km";
     
-    $title = "Jitka Dvořáčková";
-    $description = "100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
+    // Titulek a popis pro sociální sítě
+    $socialTitle = "Jitka Dvořáčková, 100 1/2maratonů za 100 dní pro dětský hospic Dům pro Julii";
+    $socialDescription = "Půlmaraton #{$raceNumber} | Čas: {$finishTime}";
 
+    // DŮLEŽITÉ: Aby Facebook načetl správný obrázek, musí URL ukazovat na tuto stránku
     $currentUrl = url()->current();
-    $ogImageUrl = request()->getSchemeAndHttpHost() . route('results-jitka.og-image', $result->id, false);
+
+    // DŮLEŽITÉ: Přidání času (?v=...) donutí FB stáhnout obrázek znovu a nebrat starý z paměti
+    $ogImageUrl = request()->getSchemeAndHttpHost() . route('results-jitka.og-image', $result->id, false) . '?v=' . time();
 @endphp
 
 @section('title', "| {$title}")
@@ -22,20 +27,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title }}</title>
 
-    <!-- Open Graph Meta Tags pro Facebook -->
     <meta property="og:type" content="article">
     <meta property="og:url" content="{{ $currentUrl }}">
-    <meta property="og:title" content="{{ $title }}">
-    <meta property="og:description" content="{{ $description }}">
+    <meta property="og:title" content="{{ $socialTitle }}">
+    <meta property="og:description" content="{{ $socialDescription }}">
     <meta property="og:image" content="{{ $ogImageUrl }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:site_name" content="TimeLife.run">
+    <meta property="og:site_name" content="LifeRun.cz">
 
-    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $title }}">
-    <meta name="twitter:description" content="{{ $description }}">
+    <meta name="twitter:title" content="{{ $socialTitle }}">
+    <meta name="twitter:description" content="{{ $socialDescription }}">
+    <meta name="twitter:image" content="{{ $ogImageUrl }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -44,7 +48,6 @@
         <div class="pb-5">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
 
-                <!-- Nadpis stránky -->
                 <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
                     <div class="text-center">
                         <a href="{{ route('results-jitka.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
@@ -66,11 +69,9 @@
                     </div>
                 </div>
 
-                <!-- Detaily výsledku -->
                 <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                        <!-- Datum -->
                         <div class="bg-gray-700 rounded-xl p-6 text-white text-center">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +82,6 @@
                             <div class="text-3xl font-black">{{ $dateFormatted }}</div>
                         </div>
 
-                        <!-- Čas -->
                         <div class="bg-gray-700 rounded-xl p-6 text-white text-center">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,6 @@
                             <div class="text-3xl font-black">{{ $finishTime }}</div>
                         </div>
 
-                        <!-- Tempo -->
                         <div class="bg-gray-700 rounded-xl p-6 text-white text-center">
                             <div class="flex items-center justify-center gap-2 mb-2">
                                 <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +104,6 @@
 
                     </div>
 
-                    <!-- Mapa -->
                     <div class="mt-8 text-center">
                         <a href="{{ route('result.map', $result->id) }}" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-6 h-6">
@@ -116,12 +114,10 @@
                     </div>
                 </div>
 
-                <!-- Sdílení -->
                 <div class="bg-white overflow-hidden shadow-2xl sm:rounded-3xl mt-4 mb-4 p-4 sm:mt-8 sm:mb-8 sm:p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">Sdílet výsledek</h2>
 
                     <div class="flex flex-wrap justify-center gap-4">
-                        <!-- Facebook Share Button -->
                         <button onclick="shareOnFacebook('{{ $currentUrl }}')"
                                 class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -130,8 +126,7 @@
                             Sdílet na Facebooku
                         </button>
 
-                        <!-- Twitter -->
-                        <a href="https://twitter.com/intent/tweet?text={{ urlencode($title . ' - ' . $description) }}&url={{ urlencode($currentUrl) }}"
+                        <a href="https://twitter.com/intent/tweet?text={{ urlencode($socialTitle . ' - ' . $socialDescription) }}&url={{ urlencode($currentUrl) }}"
                            target="_blank"
                            rel="noopener noreferrer"
                            class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
@@ -149,13 +144,10 @@
 
     <script>
         function shareOnFacebook(url) {
-            // Facebook Sharer - starší API bez nutnosti app_id
-            // Nevyžaduje registrovanou doménu, funguje i na localhost
             const shareUrl = 'https://www.facebook.com/sharer/sharer.php?' +
                 'u=' + encodeURIComponent(url) +
                 '&display=popup';
 
-            // Otevře popup okno
             const width = 650;
             const height = 450;
             const left = (screen.width / 2) - (width / 2);
