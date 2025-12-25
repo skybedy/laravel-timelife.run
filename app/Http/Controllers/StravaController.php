@@ -30,8 +30,6 @@ class StravaController extends Controller
     */
     public function webhookPostStrava(Request $request, ResultService $resultService, Registration $registration, TrackPoint $trackPoint, Event $event)
     {
-
-
         //pokud to neni 'create'tak to nechcem
         if ($request->input('aspect_type') != 'create')
         {
@@ -40,70 +38,39 @@ class StravaController extends Controller
 
         // zaloguje se prijem dat ze Stravy a budeme logovat jen 'create'
         Log::info('Webhook event received!', ['query' => $request->query(),'body' => $request->all()]);
-        //z pozadavku si vezmeme id uzivatele Stravy a podle nej najdeme uzivatele v nasi databazi
-        $stravaId = $request->input('owner_id');
-        //ziskani Usera 
-        $user = User::select('id', 'strava_access_token', 'strava_refresh_token', 'strava_expires_at')->where('strava_id', $stravaId)->first();
-        //ted musime zjistit, jestli token pro REST API jeste plati
-        if ($user->strava_expires_at > time())
-        {
-            //pokud token platí, vytahneme stream
-            $url = config('strava.stream.url').$request->input('object_id').config('strava.stream.params');
 
-            $token = $user->strava_access_token;
+        try {
+            // Použijeme stejnou metodu jako při nahrávání přes URL
+            $activityData = $resultService->getStreamFromStrava($request);
 
-            $response = Http::withToken($token)->get($url)->json();
-            //pokud dostaneme v poradku stream, tak vytahneme i detail aktivity
-            if ($response)
-            {
-                $url = config('strava.activity.url').$request->input('object_id').config('strava.activity.params');
-                // k predchozimu streamu pridame detail aktivity
-                $response += Http::withToken($token)->get($url)->json();
-
-                $this->dataProcessing($resultService, $registration, $trackPoint, $event, $response, $user->id);
+            if (!$activityData) {
+                Log::error('Failed to fetch activity data from Strava', [
+                    'activity_id' => $request->input('object_id'),
+                    'owner_id' => $request->input('owner_id'),
+                ]);
+                return response('Failed to fetch activity data', 500);
             }
-        }
-        else
-        {
 
-            $response = Http::post('https://www.strava.com/oauth/token', [
-                'client_id' => '117954',
-                'client_secret' => 'a56df3b8bb06067ebe76c7d23af8ee8211d11381',
-                'refresh_token' => $user->strava_refresh_token,
-                'grant_type' => 'refresh_token',
+            // Kontrola, zda aktivita má GPS data
+            if (!isset($activityData['latlng']['data']) || empty($activityData['latlng']['data'])) {
+                Log::info('Activity has no GPS data (indoor activity?)', [
+                    'activity_id' => $request->input('object_id'),
+                    'type' => $activityData['type'] ?? 'unknown',
+                ]);
+                return response('Activity has no GPS data, skipping', 200);
+            }
+
+            $userId = $activityData['user_id'];
+
+            $this->dataProcessing($resultService, $registration, $trackPoint, $event, $activityData, $userId);
+
+        } catch (\Exception $e) {
+            Log::error('Webhook processing failed', [
+                'activity_id' => $request->input('object_id'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-
-            $body = $response->body();
-            
-            $content = json_decode($body, true);
-
-            $user1 = User::where('id', $user->id)->first();
-            
-            $user1->strava_access_token = $content['access_token'];
-            
-            $user1->strava_refresh_token = $content['refresh_token'];
-            
-            $user1->strava_expires_at = $content['expires_at'];
-            
-            $user1->save();
-
-            $url = config('strava.stream.url').$request->input('object_id').config('strava.stream.params');
-
-            $token = $user1->strava_access_token;
-
-            $response = Http::withToken($token)->get($url)->json();
-            //pokud dostaneme v poradku stream, tak vytahneme i detail aktivity
-            if ($response)
-            {
-                $url = config('strava.activity.url').$request->input('object_id').config('strava.activity.params');
-                // k predchozimu streamu pridame detail aktivity
-                $response += Http::withToken($token)->get($url)->json();
-
-                $this->dataProcessing($resultService, $registration, $trackPoint, $event, $response, $user->id);
-            }
-
-
-
+            return response('Webhook processing failed', 500);
         }
 
         return response('OK', 200);
@@ -134,7 +101,15 @@ class StravaController extends Controller
 
         $result->finish_time = $finishTime['finish_time'];
 
-        $result->pace = $finishTime['pace'];
+        $result->pace_km = $finishTime['pace'];
+
+        // Calculate pace per mile (1 mile = 1.60934 km)
+        $paceParts = explode(':', $finishTime['pace']);
+        $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
+        $paceMileSeconds = round($paceKmSeconds * 1.60934);
+        $paceMileMinutes = floor($paceMileSeconds / 60);
+        $paceMileSecondsRemainder = $paceMileSeconds % 60;
+        $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
 
         $result->finish_time_sec = $finishTime['finish_time_sec'];
 
@@ -144,10 +119,21 @@ class StravaController extends Controller
         {
             $result->save();
         }
+        catch (UniqueConstraintViolationException $e)
+        {
+            // Duplicate result - webhook was sent multiple times by Strava
+            DB::rollback();
+            Log::info('Duplicate result detected - webhook sent multiple times', [
+                'user_id' => $userId,
+                'registration_id' => $finishTime['registration_id'],
+                'finish_time_sec' => $finishTime['finish_time_sec']
+            ]);
+            exit();
+        }
         catch (QueryException $e)
         {
+            DB::rollback();
             Log::alert('Došlo k problému s nahráním dat', ['error' => $e->getMessage()]);
-
             exit();
         }
 
@@ -237,7 +223,15 @@ class StravaController extends Controller
 
             $result->finish_time = $finishTime['finish_time'];
 
-            $result->pace = $finishTime['pace'];
+            $result->pace_km = $finishTime['pace'];
+
+            // Calculate pace per mile (1 mile = 1.60934 km)
+            $paceParts = explode(':', $finishTime['pace']);
+            $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
+            $paceMileSeconds = round($paceKmSeconds * 1.60934);
+            $paceMileMinutes = floor($paceMileSeconds / 60);
+            $paceMileSecondsRemainder = $paceMileSeconds % 60;
+            $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
 
             $result->finish_time_sec = $finishTime['finish_time_sec'];
 
@@ -247,9 +241,20 @@ class StravaController extends Controller
             {
                 $result->save();
             }
+            catch (UniqueConstraintViolationException $e)
+            {
+                DB::rollback();
+                Log::info('Duplicate result detected in autouploadStrava', [
+                    'user_id' => $user->id,
+                    'registration_id' => $finishTime['registration_id']
+                ]);
+                return;
+            }
             catch (QueryException $e)
             {
+                DB::rollback();
                 Log::alert('Došlo k problému s nahráním dat', ['error' => $e->getMessage()]);
+                return;
             }
 
             for ($i = 0; $i < count($finishTime['track_points']); $i++)

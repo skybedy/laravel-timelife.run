@@ -276,8 +276,8 @@ class ResultService
                 //dd($event['id']);
 
 
-                if (isset($registration->registrationExists($event['id'], $user)->id)) {
-                    $registrationId = $registration->registrationExists($event['id'], $user)->id;
+                if (isset($registration->registrationExists($user, $event['id'], NULL, NULL)->id)) {
+                    $registrationId = $registration->registrationExists($user, $event['id'], NULL, NULL)->id;
                     //dd( $registration_id );
 
                     $trackPoints = [];
@@ -438,16 +438,15 @@ class ResultService
     //otazka zda spis nevyvolat vyjimky a logovat v controlleru, asi predelat
     public function getActivityFinishDataFromStravaWebhook($activityData, $registration, $userId)
     {
-       //dd($activityData);
         //pocatecni cas aktivity v UNIX sekundach
         $startDayTimestamp = strtotime($activityData['start_date_local']);
         //datum aktivity pro dotaz do DB
         $activityDate = date("Y-m-d", $startDayTimestamp);
-       // dd($activityDate);
         //pole pro ulozeni bodu trasy
         $trackPointArray = [];
         //vytvoreni noveho pole se stejnymi paramatry jak GPX soubor
         $activityDataArray = [];
+
         // vytvoreni pole ve stejne strukture jak GPX soubor
         foreach ($activityData['latlng']['data'] as $key => $val)
         {
@@ -478,10 +477,10 @@ class ResultService
         foreach ($events as $key => $event)
         {
             //kontrola, jestli je uzivatel k nemu prihlasen
-            if (isset($registration->registrationExists($event['id'], $userId)->id))
+            if (isset($registration->registrationExists($userId, $event['id'], NULL, NULL)->id))
             {
                 //pokud ano, tak si vezmeme id registrace uzivatele k zavodu
-                $registrationId = $registration->registrationExists($event['id'], $userId)->id;
+                $registrationId = $registration->registrationExists($userId, $event['id'], NULL, NULL)->id;
                 //prochazeni pole s daty aktivity
                 foreach($activityDataArray as $activityData)
                 {
@@ -709,8 +708,8 @@ class ResultService
             foreach ($events as $event) {
                 if ($distance >= $event['distance']) {
 
-                    if (isset($registration->registrationExists($event['id'], $request->user()->id)->id)) {
-                        $registrationId = $registration->registrationExists($event['id'], $request->user()->id)->id;
+                    if (isset($registration->registrationExists($request->user()->id, $event['id'], NULL, NULL)->id)) {
+                        $registrationId = $registration->registrationExists($request->user()->id, $event['id'], NULL, NULL)->id;
                         //dd( $registration_id );
 
 
@@ -1070,11 +1069,20 @@ class ResultService
             {
                 $result->save();
             }
+            catch(UniqueConstraintViolationException $e)
+            {
+                DB::rollback();
+                // Duplicate result - user tried to upload the same activity twice
+                return [
+                    'error' => 'DUPLICATE_RESULT',
+                    'error_message' => 'Tento výsledek (se stejným časem a datem) už byl nahrán.',
+                ];
+            }
             catch(QueryException $e)
             {
+                DB::rollback();
                 return [
                     'error' => 'ERROR_DB',
-
                     'error_message' => $e->getMessage(),
                 ];
             }

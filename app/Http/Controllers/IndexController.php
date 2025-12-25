@@ -121,18 +121,27 @@ class IndexController extends Controller
         $result->registration_id = $finishTime['registration_id'];
         $result->finish_time_date = $finishTime['finish_time_date'];
         $result->finish_time = $finishTime['finish_time'];
-        $result->pace = $finishTime['pace'];
-        $result->finish_time_sec = $finishTime['finish_time_sec'];
-        // $result->duplicity_check = $finishTime['duplicity_check'];
-       // $result->place = $request->place;
+        $result->pace_km = $finishTime['pace'];
 
-        //  dd($result);
+        // Calculate pace per mile (1 mile = 1.60934 km)
+        $paceParts = explode(':', $finishTime['pace']);
+        $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
+        $paceMileSeconds = round($paceKmSeconds * 1.60934);
+        $paceMileMinutes = floor($paceMileSeconds / 60);
+        $paceMileSecondsRemainder = $paceMileSeconds % 60;
+        $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
+
+        $result->finish_time_sec = $finishTime['finish_time_sec'];
 
         DB::beginTransaction();
 
         try {
             $result->save();
+        } catch (UniqueConstraintViolationException $e) {
+            DB::rollback();
+            return back()->withError('Tento výsledek (se stejným časem a datem) už byl nahrán.')->withInput();
         } catch (QueryException $e) {
+            DB::rollback();
             return back()->withError('Došlo k problému s nahráním souboru, kontaktujte timechip.cz@gmail.com')->withInput();
         }
 

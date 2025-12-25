@@ -30,20 +30,29 @@ class WebhookController extends Controller
         $result->registration_id = $finishTime['registration_id'];
         $result->finish_time_date = $finishTime['finish_time_date'];
         $result->finish_time = $finishTime['finish_time'];
-        $result->pace = $finishTime['pace'];
-        $result->finish_time_sec = $finishTime['finish_time_sec'];
-        // $result->duplicity_check = $finishTime['duplicity_check'];
-        $result->place = 'Nevim';
+        $result->pace_km = $finishTime['pace'];
 
-        // dd($result);
+        // Calculate pace per mile (1 mile = 1.60934 km)
+        $paceParts = explode(':', $finishTime['pace']);
+        $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
+        $paceMileSeconds = round($paceKmSeconds * 1.60934);
+        $paceMileMinutes = floor($paceMileSeconds / 60);
+        $paceMileSecondsRemainder = $paceMileSeconds % 60;
+        $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
+
+        $result->finish_time_sec = $finishTime['finish_time_sec'];
 
         DB::beginTransaction();
 
         try {
             $result->save();
+        } catch (UniqueConstraintViolationException $e) {
+            DB::rollback();
+            \Log::info('Duplicate result detected in autouploadStrava (WebhookController)');
+            return back()->withError('Tento výsledek (se stejným časem a datem) už byl nahrán.')->withInput();
         } catch (QueryException $e) {
+            DB::rollback();
             dd($e);
-
             return back()->withError('Došlo k problému s nahráním souboru, kontaktujte timechip.cz@gmail.com')->withInput();
         }
 
@@ -164,7 +173,16 @@ class WebhookController extends Controller
             $result->registration_id = $finishTime['registration_id'];
             $result->finish_time_date = $finishTime['finish_time_date'];
             $result->finish_time = $finishTime['finish_time'];
-            $result->pace = $finishTime['pace'];
+            $result->pace_km = $finishTime['pace'];
+
+            // Calculate pace per mile (1 mile = 1.60934 km)
+            $paceParts = explode(':', $finishTime['pace']);
+            $paceKmSeconds = ($paceParts[0] * 60) + $paceParts[1];
+            $paceMileSeconds = round($paceKmSeconds * 1.60934);
+            $paceMileMinutes = floor($paceMileSeconds / 60);
+            $paceMileSecondsRemainder = $paceMileSeconds % 60;
+            $result->pace_mile = $paceMileMinutes . ':' . str_pad($paceMileSecondsRemainder, 2, '0', STR_PAD_LEFT);
+
             $result->finish_time_sec = $finishTime['finish_time_sec'];
             $result->place = null; // Will be calculated later
 
@@ -172,12 +190,30 @@ class WebhookController extends Controller
 
             try {
                 $result->save();
+            } catch (UniqueConstraintViolationException $e) {
+                DB::rollback();
+                \Log::info('Duplicate result detected - webhook sent multiple times', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                    'registration_id' => $finishTime['registration_id'],
+                ]);
+                return response()->json(['message' => 'Duplicate result, already processed'], 200);
+            } catch (QueryException $e) {
+                DB::rollback();
+                \Log::error('Database error while saving result', [
+                    'activity_id' => $request->input('object_id'),
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                return response()->json(['error' => 'Database error'], 500);
+            }
 
-                // Add result_id to track points
-                for ($i = 0; $i < count($finishTime['track_points']); $i++) {
-                    $finishTime['track_points'][$i]['result_id'] = $result->id;
-                }
+            // Add result_id to track points
+            for ($i = 0; $i < count($finishTime['track_points']); $i++) {
+                $finishTime['track_points'][$i]['result_id'] = $result->id;
+            }
 
+            try {
                 // Insert track points
                 TrackPoint::insert($finishTime['track_points']);
 
@@ -211,7 +247,7 @@ class WebhookController extends Controller
                 return response()->json(['error' => 'Duplicate time data in activity'], 409);
             } catch (QueryException $e) {
                 DB::rollback();
-                \Log::error('Database error while saving result', [
+                \Log::error('Database error while inserting track points', [
                     'activity_id' => $request->input('object_id'),
                     'user_id' => $userId,
                     'error' => $e->getMessage(),

@@ -175,6 +175,10 @@ class EventController extends Controller
             {
                 return back()->withError('Došlo k problému s nahráním souboru, kontaktujte timechip.cz@gmail.com')->withInput();
             }
+            elseif ($resultSave['error'] == 'DUPLICATE_RESULT')
+            {
+                return back()->withError($resultSave['error_message'])->withInput();
+            }
         }
 
 
@@ -306,6 +310,10 @@ class EventController extends Controller
             if ($resultSave['error'] == 'ERROR_DB')
             {
                 return back()->withError('Došlo k problému s nahráním souboru, kontaktujte timechip.cz@gmail.com')->withInput();
+            }
+            elseif ($resultSave['error'] == 'DUPLICATE_RESULT')
+            {
+                return back()->withError($resultSave['error_message'])->withInput();
             }
         }
 
