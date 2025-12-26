@@ -20,7 +20,7 @@ $(() => {
                 }
             }
 
-            var url = $(this).attr('href');
+            var url = $(this).attr('href').replace('/map', '/map-data');
 
             // Vytvoření řádku s mapou - použití unikátního ID pro každou mapu
             var mapId = 'm_' + trId;

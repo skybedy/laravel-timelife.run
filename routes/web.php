@@ -85,6 +85,7 @@ Route::get('/event/{eventId}/result', [EventController::class, 'resultIndex'])->
 Route::get('/event/{eventId}/startlist', [EventController::class, 'startlistIndex'])->name('event.startlist.index');
 
 Route::get('/result/{resultId}/map', [ResultController::class, 'resultMap'])->name('result.map');
+Route::get('/result/{resultId}/map-data', [ResultController::class, 'resultMapData'])->name('result.map.data');
 Route::get('/event/result/{eventTypeId}/{registrationId}', [ResultController::class, 'resultUser'])->name('result.user');
 Route::get('/about', [AboutController::class, 'index'])->name('about.index');
 

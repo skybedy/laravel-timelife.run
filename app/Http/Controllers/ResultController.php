@@ -64,4 +64,19 @@ class ResultController extends Controller
         ]);
     }
 
+    public function resultMapData(Request $request)
+    {
+        $trackPoints = TrackPoint::select('latitude', 'longitude')
+            ->where('result_id', $request->resultId)
+            ->get();
+
+        // Vrátit track pointy jako GPX XML string (bez XML hlavičky)
+        $gpxString = '';
+        foreach ($trackPoints as $point) {
+            $gpxString .= '<trkpt lat="' . $point->latitude . '" lon="' . $point->longitude . '"></trkpt>';
+        }
+
+        return response()->json($gpxString);
+    }
+
 }
