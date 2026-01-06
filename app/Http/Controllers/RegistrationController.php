@@ -6,12 +6,8 @@ use App\Models\Category;
 use App\Models\Registration;
 use App\Models\Event;
 use Illuminate\Http\Request;
-use Stripe\StripeClient;
-use Stripe\Checkout\Session;
-use Stripe\Stripe;
 use App\Models\PaymentRecepient;
-use App\Models\Payment;
-use App\Models\Payout;
+use App\Services\PaymentService;
 use Illuminate\Support\Facades\Log;
 
 class RegistrationController extends Controller
@@ -92,177 +88,71 @@ class RegistrationController extends Controller
 
 
 
-    public function checkoutDifferentPaymentRecipient(Request $request,StripeClient $stripe,PaymentRecepient $paymentRecepient)
+    public function checkoutDifferentPaymentRecipient(Request $request, PaymentService $paymentService, PaymentRecepient $paymentRecepient)
     {
-        $payment_recepient = $paymentRecepient->find($request->payment_recipient);
+        $payment_recipient = $paymentRecepient->find($request->payment_recipient);
 
-        $price = $stripe->prices->retrieve($payment_recepient->stripe_price_id);
-
-        // Vytvoření Stripe Checkout Session
-        $checkout_session = $stripe->checkout->sessions->create([
-            'line_items' => [[
-                'price' => $payment_recepient->stripe_price_id, // Production Price ID
-                'quantity' => 1,
-            ]],
-            'mode' => 'payment',
-            'success_url' => route('payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('payment.cancel'),
-            'metadata' => [
-                'amount' => $price->unit_amount, // Cena v v halerich
-                'event_id' => $request->event_id,
-                'payment_recipient_id' => $request->payment_recipient,
-            ],
-
-            'payment_intent_data' => [
-                'transfer_data' => ['destination' => $payment_recepient->stripe_client_id],
-                'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
-                'statement_descriptor' => 'TIMELIFE',
-            ],
+        // This fetch might be redundant if we trust metadata, but keeping for price object logic
+        // Ideally helper fetch price but lets simplify to raw passing if ID known
+        
+        $session = $paymentService->createCheckoutSession([
+            'price_id' => $payment_recipient->stripe_price_id,
+            'event_id' => $request->event_id,
+            'payment_recipient_id' => $request->payment_recipient,
+            'transfer_destination' => $payment_recipient->stripe_client_id,
         ]);
 
-        // Přesměrování na Stripe Checkout
-        return redirect($checkout_session->url);
+        return redirect($session->url);
     }
 
 
 
 
 
-        public function checkout(Request $request,StripeClient $stripe)
-        {
-            $price = $stripe->prices->retrieve(env('STRIPE_PRICE_ID'));
+    public function checkout(Request $request, PaymentService $paymentService)
+    {
+        // Using env variables directly here as in original code
+        $session = $paymentService->createCheckoutSession([
+            'price_id' => env('STRIPE_PRICE_ID'),
+            'event_id' => $request->event_id,
+            'payment_recipient_id' => $request->payment_recipient,
+            'transfer_destination' => env('STRIPE_CONNECT_CLIENT_ID'),
+        ]);
 
-            // Vytvoření Stripe Checkout Session
-            $checkout_session = $stripe->checkout->sessions->create([
-                'line_items' => [[
-                    'price' => env('STRIPE_PRICE_ID'), // Production Price ID
-                    'quantity' => 1,
-                ]],
-
-                'mode' => 'payment',
-                'success_url' => route('payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('payment.cancel'),
-                'metadata' => [
-                    'amount' => $price->unit_amount, // Cena v v halerich
-                    'event_id' => $request->event_id,
-                    'payment_recipient_id' => $request->payment_recipient,
-                ],
-
-                'payment_intent_data' => [
-                    'transfer_data' => ['destination' => env('STRIPE_CONNECT_CLIENT_ID')],
-                    'setup_future_usage' => 'on_session', //mozna kvuli apple kdyz nebude fungovat,dat pryč
-                    'statement_descriptor' => 'TIMELIFE',
-                ],
-            ]);
-
-            // Přesměrování na Stripe Checkout
-            return redirect($checkout_session->url);
-
-            }
-
-
-
-    public function handleWebhook(Request $request)
-{
-    $payload = $request->getContent();
-    $sig_header = $request->header('Stripe-Signature');
-    $endpoint_secret = env('STRIPE_WEBHOOK_SECRET');
-
-    try {
-        $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $endpoint_secret);
-    } catch (\Exception $e) {
-        Log::error('Webhook validation failed: ' . $e->getMessage());
-        return response()->json(['error' => 'Invalid'], 400);
+        return redirect($session->url);
     }
 
-$stripeSecret = config('services.stripe.secret');
 
-if (!$stripeSecret) {
-    Log::error('Kritická chyba: Stripe Secret Key nebyl v konfiguraci nalezen!');
-    return; // Zabráníme pádu aplikace
-}
 
-    $stripe = new \Stripe\StripeClient($stripeSecret);
-    if ($event->type == 'payment_intent.succeeded') {
-        $paymentIntent = $event->data->object;
+    public function handleWebhook(Request $request, PaymentService $paymentService)
+    {
+        $payload = $request->getContent();
+        $sig_header = $request->header('Stripe-Signature');
+        $endpoint_secret = env('STRIPE_WEBHOOK_SECRET');
 
-        // 1. KROK: Vytvoříme prázdný záznam v DB (Placeholder)
-        $this->createPaymentPlaceholder($paymentIntent);
-
-        // 2. KROK: Hned se pokusíme zjistit a doplnit poplatky
-        $this->updatePaymentActualFees($paymentIntent->id, $stripe);
-    }
-
-    return response()->json(['status' => 'success'], 200);
-}
-
-protected function createPaymentPlaceholder($intent)
-{
-    $metadata = $intent->metadata;
-    
-    $payment = new \App\Models\Payment();
-    $payment->stripe_payment_intent_id = $intent->id;
-    $payment->payment_recipient_id = $metadata['payment_recipient_id']; // Interní ID (např. 10)
-    $payment->event_id = $metadata['event_id'];
-    $payment->donor_email = $metadata['donor_email'] ?? 'N/A';
-    $payment->donor_name = $metadata['donor_name'] ?? 'N/A';
-    
-    $payment->total_amount = $intent->amount / 100;
-    $payment->fee_amount = 0; // Zatím nula, doplníme v druhém kroku
-    $payment->payout_amount = $intent->amount / 100; // Zatím plná částka
-    $payment->is_live = $intent->livemode; //jestli je live
-    
-    $payment->save();
-
-    Log::info("✅ Placeholder platby ID {$payment->id} vytvořen pro příjemce {$payment->payment_recipient_id}.");
-}
-
-protected function updatePaymentActualFees($paymentIntentId, $stripe)
-{
-    try {
-        // Počkáme 5 vteřin na Stripe
-        sleep(5); 
-
-        $paymentIntent = $stripe->paymentIntents->retrieve($paymentIntentId);
-        $chargeId = $paymentIntent->latest_charge;
-        $charge = $stripe->charges->retrieve($chargeId, ['expand' => ['balance_transaction']]);
-        
-        if ($charge->balance_transaction && isset($charge->balance_transaction->fee)) {
-            $exactFee = $charge->balance_transaction->fee / 100;
-            
-            // Najdeme platbu v DB
-            $payment = \App\Models\Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
-            
-            if ($payment) {
-                // PŘÍMÝ ZÁPIS (jistota pro MariaDB)
-                $payment->fee_amount = $exactFee;
-                $payment->payout_amount = $payment->total_amount - $exactFee;
-                
-                // Uložení bez ohledu na to, co si myslí $fillable
-                $payment->save(); 
-
-                Log::info("✅ ZAPSÁNO NATVRDO DO DB: Částka {$payment->total_amount}, Poplatek {$exactFee}");
-            }
+        try {
+            $paymentService->handleWebhook($payload, $sig_header, $endpoint_secret);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid webhook'], 400);
         }
-    } catch (\Exception $e) {
-        Log::error("❌ Chyba při ukládání poplatku: " . $e->getMessage());
+
+        return response()->json(['status' => 'success'], 200);
     }
-}
 
 
 
     
     
-    public function success(Request $request, StripeClient $stripe)
+    public function success(Request $request, PaymentService $paymentService)
     {
         $amount = null;
 
         try {
             if ($request->has('payment_intent')) {
-                $paymentIntent = $stripe->paymentIntents->retrieve($request->payment_intent);
+                $paymentIntent = $paymentService->retrievePaymentIntent($request->payment_intent);
                 $amount = $paymentIntent->amount / 100;
             } elseif ($request->has('session_id')) {
-                $session = $stripe->checkout->sessions->retrieve($request->session_id);
+                $session = $paymentService->retrieveCheckoutSession($request->session_id);
                 $amount = $session->amount_total / 100;
             }
         } catch (\Exception $e) {
@@ -288,9 +178,8 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
 
 
 
-    public function checkoutDynamic(Request $request, StripeClient $stripe, Registration $registration,)
+    public function checkoutDynamic(Request $request, PaymentService $paymentService)
     {
-        // Validace
         $request->validate([
             'amount' => 'required|numeric|min:10|max:1000000',
             'event_id' => 'required|integer',
@@ -299,101 +188,21 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
 
         $payment_recipient = PaymentRecepient::findOrFail($request->payment_recipient);
 
-        // Vytvoření Stripe Checkout Session s dynamickou cenou
-        $checkout_session = $stripe->checkout->sessions->create([
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => 'czk',
-                    'unit_amount' => $request->amount * 100, // částka v haléřích
-                    'product_data' => [
-                        'name' => 'Jitka Dvořáčková, 100 půmaratonů za 100 dní',
-                        'description' => 'Vaše platba bude prostřednictvím služby Sripe převedena přímo na účet 2101782768/2010 organizace Dům pro Julii,',
-                        'images' => ['https://liferun.cz/images/dum-pro-julii-logo.png'],
-                    ],
-                ],
-                'quantity' => 1,
-            ]],
-            'mode' => 'payment',
-            'success_url' => route('payment.success').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('payment.cancel'),
-            'metadata' => [
-                'amount' => $request->amount * 100, // Cena v haléřích
-                'event_id' => $request->event_id,
-                'payment_recipient_id' => $request->payment_recipient,
-            ],
-            'payment_intent_data' => [
-                'transfer_data' => ['destination' => $payment_recipient->stripe_client_id],
-                'setup_future_usage' => 'on_session',
-                'statement_descriptor' => 'LIFERUN.CZ JDVORACKOVA',
-            ],
+        $session = $paymentService->createCheckoutSession([
+            'amount' => $request->amount,
+            'event_id' => $request->event_id,
+            'payment_recipient_id' => $request->payment_recipient,
+            'transfer_destination' => $payment_recipient->stripe_client_id,
+            'amount_cents' => $request->amount * 100, // For metadata
         ]);
 
-        // Přesměrování na Stripe Checkout
-        return redirect($checkout_session->url);
+        return redirect($session->url);
     }
 
 
-    private function createPayment($checkout_session)
-    {
-        // Prevence duplicitních plateb
-        if (Payment::where('stripe_session_id', $checkout_session->id)->exists()) {
-            return;
-        }
 
-        $payment = new Payment();
 
-        // Všichni jsou anonymní dárci (žádná registrace)
-        $payment->user_id = null;
 
-        // Prioritně použít údaje z metadat (z našeho formuláře)
-        // Pokud nejsou v metadatech, použít customer_details ze Stripe
-        $payment->donor_email = $checkout_session->metadata->donor_email ?? $checkout_session->customer_details->email ?? null;
-        $payment->donor_name = $checkout_session->metadata->donor_name ?? $checkout_session->customer_details->name ?? null;
-
-        // Společná data
-        $payment->event_id = $checkout_session->metadata->event_id;
-        $payment->payment_recipient_id = $checkout_session->metadata->payment_recipient_id;
-        $payment->total_amount = $checkout_session->metadata->amount / 100;
-        
-        // Pro Checkout Session (starší implementace) nemusíme mít transfer data snadno dostupná, 
-        // pokud to nebyl connect. Prozatím necháme null nebo stejné jako total.
-        // Vylepšení: Pokud bychom používali Connect i zde, museli bychom to vytáhnout z payment_intentu.
-        
-        $payment->stripe_session_id = $checkout_session->id;
-                $payment->save();
-    }
-
-    private function createPayout($payout)
-    {
-        // Prevence duplicitních payoutů
-        if (Payout::where('stripe_payout_id', $payout->id)->exists()) {
-            return;
-        }
-
-        // Najít payment_recipient_id z destination (Stripe Connect account ID)
-        $paymentRecipient = PaymentRecepient::where('stripe_client_id', $payout->destination)->first();
-
-        if (!$paymentRecipient) {
-            Log::error('Payment recipient not found for payout:', [
-                'payout_id' => $payout->id,
-                'destination' => $payout->destination,
-            ]);
-            return;
-        }
-
-        $payoutModel = new Payout();
-        $payoutModel->stripe_payout_id = $payout->id;
-        $payoutModel->payment_recipient_id = $paymentRecipient->id;
-        $payoutModel->amount = $payout->amount;
-        $payoutModel->currency = $payout->currency;
-        $payoutModel->arrival_date = $payout->arrival_date ? date('Y-m-d H:i:s', $payout->arrival_date) : null;
-        $payoutModel->status = $payout->status;
-        $payoutModel->type = $payout->type ?? null;
-        $payoutModel->description = $payout->description ?? null;
-        $payoutModel->stripe_data = json_decode(json_encode($payout), true);
-
-        $payoutModel->save();
-    }
 
     public function cancel()
     {
@@ -418,93 +227,51 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
     /**
      * Vytvoří Payment Intent pro Stripe Elements
      */
-  public function createPaymentIntent(Request $request)
-{
-    $request->validate([
-        'amount' => 'required|integer|min:10|max:1000000',
-        'event_id' => 'required|integer',
-        'payment_recipient_id' => 'required|integer', // Interní číslo ID (např. 10)
-        'donor_email' => 'nullable|email',
-        'donor_name' => 'nullable|string|max:255',
-    ]);
+    public function createPaymentIntent(Request $request, PaymentService $paymentService)
+    {
+        $request->validate([
+            'amount' => 'required|integer|min:10|max:1000000',
+            'event_id' => 'required|integer',
+            'payment_recipient_id' => 'required|integer',
+            'donor_email' => 'nullable|email',
+            'donor_name' => 'nullable|string|max:255',
+        ]);
 
-    $stripe = app(\Stripe\StripeClient::class);
-    
-    // Částka v haléřích
-    $amountInCents = $request->amount * 100;
-    
-    // VAŠE TESTOVACÍ ID NATVRDO
-    $testRecipientId = $testRecipientId = config('services.stripe.connect_client_id');
-
-    try {
-        $paymentIntent = $stripe->paymentIntents->create([
-            'amount' => $amountInCents,
-            'currency' => 'czk',
-            'automatic_payment_methods' => ['enabled' => true],
-            
-            // 1. Nastavuje odpovědnost za platbu (kvůli fee a verifikaci)
-            'on_behalf_of' => $testRecipientId, 
-            
-            // 2. KLÍČOVÉ PRO DASHBOARD: Fyzicky pošle peníze příjemci
-            'transfer_data' => [
-                'destination' => $testRecipientId,
-            ],
-            
-            'statement_descriptor_suffix' => 'JDVORACKOVA',
-            'metadata' => [
+        try {
+            $paymentIntent = $paymentService->createPaymentIntent([
+                'amount' => $request->amount,
                 'event_id' => $request->event_id,
-                // TADY OPRAVA PRO SQL: Musí tam jít to číslo z requestu (např. 10)
-                'payment_recipient_id' => $request->payment_recipient_id, 
+                'payment_recipient_id' => $request->payment_recipient_id,
                 'donor_email' => $request->donor_email,
                 'donor_name' => $request->donor_name,
-            ],
-        ]);
+                'on_behalf_of' => config('services.stripe.connect_client_id'),
+                'transfer_destination' => config('services.stripe.connect_client_id'),
+                'statement_descriptor_suffix' => 'JDVORACKOVA', 
+            ]);
 
-        return response()->json([
-            'clientSecret' => $paymentIntent->client_secret,
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'clientSecret' => $paymentIntent->client_secret,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Potvrdí úspěšnou platbu a uloží ji do databáze
      */
-    public function confirmPayment(Request $request)
+    public function confirmPayment(Request $request, PaymentService $paymentService)
     {
         $request->validate([
             'payment_intent_id' => 'required|string',
         ]);
 
         try {
-            $stripe = app(StripeClient::class);
-            $paymentIntent = $stripe->paymentIntents->retrieve($request->payment_intent_id);
+            $success = $paymentService->confirmPayment($request->payment_intent_id);
 
-            // Zkontroluj, jestli platba proběhla úspěšně
-            if ($paymentIntent->status === 'succeeded') {
-                // Zkontroluj, jestli už neexistuje záznam
-                if (!Payment::where('stripe_payment_intent_id', $paymentIntent->id)->exists()) {
-                    $payment = new Payment();
-                    $payment->user_id = null;
-                    $payment->donor_email = $paymentIntent->metadata->donor_email ?? null;
-                    $payment->donor_name = $paymentIntent->metadata->donor_name ?? null;
-                    $payment->event_id = $paymentIntent->metadata->event_id;
-                    $payment->payment_recipient_id = $paymentIntent->metadata->payment_recipient_id;
-                    
-                    $payment->total_amount = $paymentIntent->amount / 100;
-                    
-                    $fees = $this->calculateFees($paymentIntent);
-                    $payment->fee_amount = $fees['fee_amount'];
-                    $payment->payout_amount = $fees['payout_amount'];
-
-                    $payment->stripe_session_id = null; // Elements nepoužívá session
-                    $payment->stripe_payment_intent_id = $paymentIntent->id;
-                    $payment->save();
-                }
-
+            if ($success) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Platba byla úspěšně zpracována'
@@ -522,68 +289,7 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
         }
     }
 
-    protected function createPaymentFromIntent($paymentIntent, $stripe)
-{
-    try {
-        // 1. Získáme CHARGE ID (to je ta reálná transakce na platformě)
-        $chargeId = $paymentIntent->latest_charge;
-        
-        // 2. Musíme se doptat na Balance Transaction, abychom viděli stržený poplatek
-        $charge = $stripe->charges->retrieve($chargeId, ['expand' => ['balance_transaction']]);
-        $bt = $charge->balance_transaction;
 
-        // 3. TADY JE TA REALITA: BT má v sobě 'fee', které strhl Stripe na platformě
-        $exactFee = $bt->fee / 100; 
-        $totalAmount = $paymentIntent->amount / 100;
-        $payoutAmount = $totalAmount - $exactFee;
-
-        Log::info('calculateFees: Získáno přesně z Balance Transaction', [
-            'fee_amount' => $exactFee,
-            'payout_amount' => $payoutAmount
-        ]);
-
-        // ... zbytek ukládání do DB ...
-    } catch (\Exception $e) {
-        Log::error('Chyba při vytahování poplatku: ' . $e->getMessage());
-    }
-}
-
-    private function calculateFees($paymentIntent)
-{
-    $amountInCzk = $paymentIntent->amount / 100;
-    
-    // Default: Odhad poplatku (Stripe Standard: 1.4% + 6.50 Kč pro EU karty)
-    // Pokud je platba 200 Kč, poplatek je cca (200 * 0.014) + 6.5 = 2.8 + 6.5 = 9.3 Kč
-    $estimatedFee = ($amountInCzk * 0.014) + 6.50; 
-
-    $result = [
-        'fee_amount' => round($estimatedFee, 2),
-        'payout_amount' => round($amountInCzk - $estimatedFee, 2),
-    ];
-
-    try {
-        $stripe = app(\Stripe\StripeClient::class);
-
-        // Pokus o získání reálných dat z transferu
-        $transfers = $stripe->transfers->all([
-            'transfer_group' => $paymentIntent->transfer_group ?? $paymentIntent->id,
-            'limit' => 1
-        ]);
-
-        if (count($transfers->data) > 0) {
-            $transfer = $transfers->data[0];
-            $result['payout_amount'] = $transfer->amount / 100;
-            $result['fee_amount'] = $amountInCzk - $result['payout_amount'];
-            Log::info('calculateFees: Získáno přesně z API', $result);
-        } else {
-            Log::info('calculateFees: API Transfer neposkytlo, používám odhad poplatku', $result);
-        }
-    } catch (\Exception $e) {
-        Log::warning('calculateFees Error, použit odhad: ' . $e->getMessage());
-    }
-
-    return $result;
-}
 
     /**
      * Zobrazí stránku pro výběr platební metody
@@ -667,87 +373,31 @@ protected function updatePaymentActualFees($paymentIntentId, $stripe)
  * Vygeneruje PaymentIntent pro Stripe Connect (Destination Charges).
  * Peníze tečou přímo příjemci a Stripe mu automaticky strhne poplatky.
  */
-public function createConnectPaymentIntent(Request $request)
-{
-    // 1. Validace příchozích dat
-    $request->validate([
-        'amount' => 'required|integer',
-        'event_id' => 'required|integer',
-        'payment_recipient_id' => 'required|integer', // Interní ID příjemce (číslo 10)
-    ]);
+    public function createConnectPaymentIntent(Request $request, PaymentService $paymentService)
+    {
+        $request->validate([
+            'amount' => 'required|integer',
+            'event_id' => 'required|integer',
+            'payment_recipient_id' => 'required|integer',
+        ]);
 
-    $connectedAccountId = $testRecipientId = config('services.stripe.connect_client_id');
-
-    $stripe = new \Stripe\StripeClient(config('stripe.secret'));
-
-    try {
-        // Výpočet v centech (50 CZK = 5000)
-        $amountInCents = $request->amount * 100;
-
-        $paymentIntent = $stripe->paymentIntents->create([
-            'amount' => $amountInCents,
-            'currency' => 'czk',
-            
-            // KLÍČOVÉ: Uděláme platbu JMÉNEM připojeného účtu.
-            // Stripe strhne poplatky jemu, ne platformě.
-            'on_behalf_of' => $connectedAccountId,
-
-            // Zajišťuje fyzický přesun čisté částky po stržení poplatků
-            'transfer_data' => [
-                'destination' => $connectedAccountId,
-            ],
-
-            'metadata' => [
+        try {
+            $paymentIntent = $paymentService->createPaymentIntent([
+                'amount' => $request->amount,
                 'event_id' => $request->event_id,
-                'payment_recipient_id' => $request->payment_recipient_id, // Interní ID (číslo 10) pro DB
+                'payment_recipient_id' => $request->payment_recipient_id,
                 'donor_email' => $request->donor_email,
                 'donor_name' => $request->donor_name,
-            ],
-            
-            // Konfigurace platebních metod (včetně Google Pay, pokud je v dash. povolen)
-            'automatic_payment_methods' => ['enabled' => true],
-        ]);
+                'on_behalf_of' => config('services.stripe.connect_client_id'),
+                'transfer_destination' => config('services.stripe.connect_client_id'),
+            ]);
 
-        return response()->json([
-            'clientSecret' => $paymentIntent->client_secret,
-        ]);
-
-    } catch (\Stripe\Exception\ApiErrorException $e) {
-        return response()->json(['error' => $e->getMessage()], 400);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'clientSecret' => $paymentIntent->client_secret,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-}
-
-    private function updatePaymentFeesFromTransfer($transfer)
-{
-    if (!isset($transfer->transfer_group)) {
-        Log::warning('Transfer nemá transfer_group:', (array)$transfer);
-        return;
-    }
-
-    // KLÍČOVÝ BOD: Stripe u Connectu často posílá "group_pi_3Sbf..." 
-    // My v DB máme uloženo čisté "pi_3Sbf..."
-    $paymentIntentId = str_replace('group_', '', $transfer->transfer_group);
-    
-    // Najdeme platbu, kterou vytvořil předchozí webhook payment_intent.succeeded
-    $payment = \App\Models\Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
-
-    if ($payment) {
-        $payoutAmount = $transfer->amount / 100; // Částka, co reálně dostane příjemce
-        $feeAmount = $payment->total_amount - $payoutAmount; // Dopočítaný poplatek Stripe
-
-        $payment->payout_amount = $payoutAmount;
-        $payment->fee_amount = $feeAmount;
-        $payment->save();
-        
-        Log::info('⚡ ÚSPĚCH: Platba ' . $payment->id . ' aktualizována poplatky z transferu.', [
-            'fee' => $feeAmount,
-            'payout' => $payoutAmount
-        ]);
-    } else {
-        Log::warning('⚠️ Webhook transfer.created dorazil, ale v DB nebyla nalezena platba s ID: ' . $paymentIntentId);
-    }
-}
 
 }
