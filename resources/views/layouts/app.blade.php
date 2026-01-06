@@ -45,13 +45,13 @@
             }
 
             input[type=file] {
-  widh: 100%;
-  mx-width: 100%;
+  width: 100%;
+  max-width: 100%;
   color: #444;
   padding: 5px;
   background: #fff;
   border-radius: 6px;
-  bordr: 1px solid blue;
+  border: 1px solid blue;
 }
 
 input[type=file]::file-selector-button {
@@ -72,6 +72,7 @@ input[type=file]::file-selector-button:hover {
 
 
 
+        @stack('styles')
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">

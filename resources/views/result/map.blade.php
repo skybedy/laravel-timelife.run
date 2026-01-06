@@ -21,13 +21,7 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
 
-    <style>
-        #map {
-            height: calc(100vh - 200px);
-            min-height: 400px;
-            width: 100%;
-        }
-    </style>
+
 </head>
 <body>
     <x-app-layout>
