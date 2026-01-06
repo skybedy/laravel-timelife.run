@@ -111,8 +111,8 @@ class ResultsJitkaController extends Controller
     $hours = floor($totalSeconds / 3600);
     $minutes = floor(($totalSeconds % 3600) / 60);
     $seconds = $totalSeconds % 60;
-    $totalTime = sprintf('%d:%02d', $hours, $minutes);
-    $totalTimeSec = sprintf('%02d', $seconds);
+    $totalTime = sprintf('%d:%02d:%02d', $hours, $minutes,$seconds);
+    //$totalTimeSec = sprintf('%02d', $seconds);
 
     // Průměrné tempo všech půlmaratonů
     $avgPaceSeconds = $completedResults->avg(function($result) {
@@ -151,11 +151,11 @@ class ResultsJitkaController extends Controller
     $fontPath = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
 
     // Příprava textu
-    $dateFormatted = date('d.m', strtotime($result->finish_time_date));
+    $dateFormatted = date('d.m.y', strtotime($result->finish_time_date));
     $yearFormatted = date('y', strtotime($result->finish_time_date));
     // $dateFormatted = date('d.m.Y', strtotime($result->finish_time_date));
-    $finishTime = substr($result->finish_time, 1,4);
-    $finishTimeSec = substr($result->finish_time, 6);
+    $finishTime = substr($result->finish_time, 1);
+    //$finishTimeSec = substr($result->finish_time, 6);
 
     // --- VYKRESLENÍ TEXTU (Levá strana je zachována, ale souřadnice je nutné přizpůsobit šabloně) ---
 
@@ -172,24 +172,36 @@ class ResultsJitkaController extends Controller
     imagettftext($image, 24, 0, 880, 430, $whiteColor, $fontPath, "CELKEM");
 
 
+    
+     $totalDateFormatted = strlen($dateFormatted);
+
+    // Nastavení levého okraje podle počtu znaků
+    switch ($totalDateFormatted) {
+        case 6:
+            $marginLeft = 59;
+            break;
+        case 7:
+            $marginLeft = 51;
+            break;
+        case 8:
+            $marginLeft = 45;
+            break;
+        default:
+            $marginLeft = 0;
+            break;
+    }
+
    
     // zeleny obdelnik
     // Datum
-    imagettftext($image, 18, 0, 56, 516, $whiteColor, $fontPath, "{$dateFormatted}");
-    imagesetthickness($image, 3);
-    imageline($image, 54, 522, 136, 522, $whiteColor);
-    imagettftext($image, 18, 0, 80, 546, $whiteColor, $fontPath, "{$yearFormatted}");
+    imagettftext($image, 15, 0, $marginLeft, 528, $whiteColor, $fontPath, "{$dateFormatted}");
 
     // Čas
-    imagettftext($image, 18, 0, 210, 516, $whiteColor, $fontPath, "{$finishTime}");
-    imageline($image, 198, 522, 280, 522, $whiteColor);
-     imagettftext($image, 18, 0, 222, 546, $whiteColor, $fontPath, "{$finishTimeSec}");
+    imagettftext($image, 15, 0, 196, 528, $whiteColor, $fontPath, "{$finishTime}");
    
 
     // Tempo
-    imagettftext($image, 18, 0, 352, 516, $whiteColor, $fontPath, "{$result->pace_km}");
-    imageline($image, 338, 522, 422, 522, $whiteColor);
-    imagettftext($image, 18, 0, 362, 546, $whiteColor, $fontPath, "km");
+    imagettftext($image, 15, 0, 335, 528, $whiteColor, $fontPath, "{$result->pace_km}/km");
 
     //cerveny obdelnik
     $raceNumber < 10 ? $leftMargin = 574 : $leftMargin = 552; 
@@ -197,6 +209,7 @@ class ResultsJitkaController extends Controller
     imageline($image, 530, 528, 660, 528, $whiteColor);
     imagettftext($image, 50, 0, 530, 586, $whiteColor, $fontPath, "100");
 
+    
 
     //Modry obdelnik
      $totalKmLength = strlen($totalKm);
@@ -204,41 +217,44 @@ class ResultsJitkaController extends Controller
     // Nastavení levého okraje podle počtu znaků
     switch ($totalKmLength) {
         case 2:
-            $marginLeft = 801;
+            $marginLeft = 805;
             break;
         case 3:
-            $marginLeft = 792;
+            $marginLeft = 796;
             break;
         case 4:
-            $marginLeft = 784;
+            $marginLeft = 788;
             break;
         case 5:
             $marginLeft = 780;
             break;
         case 6:
-            $marginLeft = 773;
+            $marginLeft = 777;
             break;
         case 7:
-            $marginLeft = 763;
+            $marginLeft = 768;
             break;
         default:
             $marginLeft = 0;
             break;
     }
 
-    imagettftext($image, 18, 0, $marginLeft, 528, $whiteColor, $fontPath, "{$totalKm}");
+    imagettftext($image, 15, 0, $marginLeft, 528, $whiteColor, $fontPath, "{$totalKm}");
+    
+    
+    
     // Nastavení levého okraje pro celkový čas podle počtu znaků
     $totalTimeLength = strlen($totalTime);
 
     switch ($totalTimeLength) {
-        case 4:
-            $marginLeft = 930;
+        case 7:
+            $marginLeft = 916;
             break;
-        case 5:
-            $marginLeft = 922;
+        case 8:
+            $marginLeft = 910;
             break;
-        case 6:
-            $marginLeft = 912;
+        case 9:
+            $marginLeft = 903;
             break;
         default:
             $marginLeft = 0;
@@ -246,14 +262,10 @@ class ResultsJitkaController extends Controller
     }
 
     //čas
-    imagettftext($image, 18, 0, $marginLeft, 516, $whiteColor, $fontPath, "{$totalTime}");
-    imageline($image, 914, 522, 1006, 522, $whiteColor);
-    imagettftext($image, 18, 0, 945, 546, $whiteColor, $fontPath, "{$totalTimeSec}");
+    imagettftext($image, 15, 0, $marginLeft, 528, $whiteColor, $fontPath, "{$totalTime}");
 
     //tempo
-    imagettftext($image, 18, 0, 1072, 516, $whiteColor, $fontPath, "{$avgPace}");
-    imageline($image, 1058, 522, 1146, 522, $whiteColor);
-    imagettftext($image, 18, 0, 1082, 546, $whiteColor, $fontPath, "km");
+    imagettftext($image, 15, 0, 1056, 528,$whiteColor, $fontPath, "{$avgPace}/km");
     
  
 
