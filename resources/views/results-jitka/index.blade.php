@@ -2,16 +2,8 @@
 
 @section('title', '| Výsledky')
 
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LifeRun - Výsledky Jitky Dvořáčkové</title>
+@section('title', '| Výsledky')
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
 <x-app-layout>
     <div class="pb-5">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -182,31 +174,28 @@
 
         </div>
     </div>
+    <script>
+        function shareResultOnFacebook(resultId) {
+            const url = '{{ url('results-jitka') }}/' + resultId;
+
+            // Facebook Share Dialog - podporuje sdílení do skupin
+            const shareUrl = 'https://www.facebook.com/dialog/share?' +
+                'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
+                'display=popup&' +
+                'href=' + encodeURIComponent(url) +
+                '&redirect_uri=' + encodeURIComponent(url);
+
+            // Otevře popup okno
+            const width = 650;
+            const height = 450;
+            const left = (screen.width / 2) - (width / 2);
+            const top = (screen.height / 2) - (height / 2);
+
+            window.open(
+                shareUrl,
+                'facebook-share-dialog',
+                'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
+            );
+        }
+    </script>
 </x-app-layout>
-
-<script>
-    function shareResultOnFacebook(resultId) {
-        const url = '{{ url('results-jitka') }}/' + resultId;
-
-        // Facebook Share Dialog - podporuje sdílení do skupin
-        const shareUrl = 'https://www.facebook.com/dialog/share?' +
-            'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
-            'display=popup&' +
-            'href=' + encodeURIComponent(url) +
-            '&redirect_uri=' + encodeURIComponent(url);
-
-        // Otevře popup okno
-        const width = 650;
-        const height = 450;
-        const left = (screen.width / 2) - (width / 2);
-        const top = (screen.height / 2) - (height / 2);
-
-        window.open(
-            shareUrl,
-            'facebook-share-dialog',
-            'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
-        );
-    }
-</script>
-</body>
-</html>

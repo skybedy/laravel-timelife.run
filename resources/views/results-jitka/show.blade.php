@@ -21,27 +21,9 @@
 
 @section('title', "| {$title}")
 
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title }}</title>
+@section('title', "| {$title}")
 
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ $currentUrl }}">
-    <meta property="og:title" content="{{ $socialTitle }}">
-    <meta property="og:description" content="{{ $socialDescription }}">
-    <meta property="og:image" content="{{ $ogImageUrl }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:site_name" content="LifeRun.cz">
-
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
-    <x-app-layout>
+<x-app-layout>
         <div class="pb-5">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
 
@@ -227,29 +209,26 @@
 
             </div>
         </div>
+        <script>
+            function shareOnFacebook(url) {
+                // Facebook Share Dialog - podporuje sdílení do skupin
+                const shareUrl = 'https://www.facebook.com/dialog/share?' +
+                    'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
+                    'display=popup&' +
+                    'href=' + encodeURIComponent(url) +
+                    '&redirect_uri=' + encodeURIComponent(url);
+
+                // Otevře popup okno
+                const width = 650;
+                const height = 450;
+                const left = (screen.width / 2) - (width / 2);
+                const top = (screen.height / 2) - (height / 2);
+
+                window.open(
+                    shareUrl,
+                    'facebook-share-dialog',
+                    'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
+                );
+            }
+        </script>
     </x-app-layout>
-
-    <script>
-        function shareOnFacebook(url) {
-            // Facebook Share Dialog - podporuje sdílení do skupin
-            const shareUrl = 'https://www.facebook.com/dialog/share?' +
-                'app_id={{ config('services.facebook.app_id', '1103768987825478') }}&' +
-                'display=popup&' +
-                'href=' + encodeURIComponent(url) +
-                '&redirect_uri=' + encodeURIComponent(url);
-
-            // Otevře popup okno
-            const width = 650;
-            const height = 450;
-            const left = (screen.width / 2) - (width / 2);
-            const top = (screen.height / 2) - (height / 2);
-
-            window.open(
-                shareUrl,
-                'facebook-share-dialog',
-                'width=' + width + ',height=' + height + ',top=' + top + ',left=' + left
-            );
-        }
-    </script>
-</body>
-</html>
