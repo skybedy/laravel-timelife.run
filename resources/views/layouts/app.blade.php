@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>LifeRun @yield('title')</title>
+        @stack('meta')
 
         <!-- Google tag (gtag.js) -->
         @if(app()->environment('production') && config('services.google_analytics.id'))

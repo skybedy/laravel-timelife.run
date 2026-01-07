@@ -21,7 +21,16 @@
 
 @section('title', "| {$title}")
 
-@section('title', "| {$title}")
+@push('meta')
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ $currentUrl }}">
+    <meta property="og:title" content="{{ $socialTitle }}">
+    <meta property="og:description" content="{{ $socialDescription }}">
+    <meta property="og:image" content="{{ $ogImageUrl }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="LifeRun.cz">
+@endpush
 
 <x-app-layout>
         <div class="pb-5">
